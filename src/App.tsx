@@ -420,6 +420,9 @@ function App() {
               }}
               selectedIssueId={selectedIssueId}
               userLocation={userLocation}
+              onReportAtCoords={(_lat, _lng) => {
+                setActiveTab('detection');
+              }}
             />
           )}
 
