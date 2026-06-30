@@ -1,0 +1,24 @@
+# Tasks
+
+- `[x]` **Setup & Framework Initialization**
+  - `[x]` Initialize Vite React project
+  - `[x]` Configure dependencies (e.g. Lucide Icons)
+  - `[x]` Create base directory structure and clean boilerplate
+- `[x]` **Foundation & Design System**
+  - `[x]` Create index.css with core typography, layout tokens, glassmorphism, and color system
+  - `[x]` Setup main app layout shell (Sidebar navigation, Status header)
+- `[x]` **Geolocation & Map Refactoring**
+  - `[x]` Request browser geolocation in `App.tsx` and dynamically center the map
+  - `[x]` Update initial issues generation to dynamically shift coordinates based on user location
+  - `[x]` Completely remove the SVG Digital Twin schematic map and toggles from `DigitalTwinMap.tsx`
+  - `[x]` Refactor DigitalTwinMap sidebar to display live, real-world info based on geolocated context
+- `[x]` **Points & Progression Calibration**
+  - `[x]` Reset starting points from `420` to `0` and persist points in `localStorage`
+  - `[x]` Ensure gamification tabs and metrics reflect natural progression
+- `[x]` **Gemini API Key Integration**
+  - `[x]` Automatically load API key from `.env` variable (`VITE_GEMINI_API_KEY`)
+  - `[x]` Load/Save API key from/to `localStorage` to persist custom configurations
+- `[x]` **Polishing & Verification**
+  - `[x]` Fix index.css background-clip vendor prefixing warnings
+  - `[x]` Run production build with `npm run build` to guarantee zero compilation errors
+  - `[x]` Update walkthrough.md to document the changes
