@@ -7,139 +7,82 @@ import { AgentCommandCenter } from './components/AgentCommandCenter';
 import { AuthorityPortal } from './components/AuthorityPortal';
 import { AnalyticsPanel } from './components/AnalyticsPanel';
 import { CommunityHero } from './components/CommunityHero';
+import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
+import { ToastContainer } from './components/ToastContainer';
+import { NotificationBell } from './components/NotificationBell';
+import { IssueSearchBar } from './components/IssueSearchBar';
+import { IssueTimeline } from './components/IssueTimeline';
+import { IssueComments } from './components/IssueComments';
+import { ExportButton } from './components/ExportButton';
+import { QuickReportFAB } from './components/QuickReportFAB';
+import { LocationPicker } from './components/LocationPicker';
 import {
-  Layers,
-  Upload,
-  Cpu,
-  Clipboard,
-  BarChart2,
-  Award,
-  Sparkles,
-  Key,
-  Bell
+  Layers, Upload, Cpu, Clipboard, BarChart2, Award,
+  Sparkles, Key, Shield, ChevronLeft, ChevronRight,
+  Navigation as NavigationIcon
 } from 'lucide-react';
 import './App.css';
 
-// Default coordinates (Bangalore Center)
 const DEFAULT_LAT = 12.97159;
 const DEFAULT_LNG = 77.59456;
 
-// Initializing the 3 starter issues matching geolocated coordinates
 const createInitialIssues = (userLat: number, userLng: number): AnalysisResult[] => {
   const timestamp = new Date().toISOString();
-  
-  // 1. Pothole near geolocated center
+
   const potholeLat = userLat + 0.0018;
   const potholeLng = userLng - 0.0034;
   const potholePreset = MOCK_ISSUES['pothole']!;
-  const potholeLogs = generateAgentLogs(
-    potholePreset.title!,
-    potholePreset.category!,
-    potholeLat,
-    potholeLng,
-    potholePreset.severity!,
-    120, // 120m from hospital
-    740  // 740m from school
-  );
+  const potholeLogs = generateAgentLogs(potholePreset.title!, potholePreset.category!, potholeLat, potholeLng, potholePreset.severity!, 120, 740);
 
-  // 2. Water leak near geolocated center
   const leakageLat = userLat - 0.0035;
   const leakageLng = userLng + 0.0049;
   const leakagePreset = MOCK_ISSUES['leakage']!;
-  const leakageLogs = generateAgentLogs(
-    leakagePreset.title!,
-    leakagePreset.category!,
-    leakageLat,
-    leakageLng,
-    leakagePreset.severity!,
-    820,
-    910
-  );
+  const leakageLogs = generateAgentLogs(leakagePreset.title!, leakagePreset.category!, leakageLat, leakageLng, leakagePreset.severity!, 820, 910);
 
-  // 3. Streetlight cluster outage near geolocated center
   const lightLat = userLat + 0.0069;
   const lightLng = userLng - 0.0070;
   const lightPreset = MOCK_ISSUES['streetlight']!;
-  const lightLogs = generateAgentLogs(
-    lightPreset.title!,
-    lightPreset.category!,
-    lightLat,
-    lightLng,
-    lightPreset.severity!,
-    610,
-    180 // 180m from school
-  );
+  const lightLogs = generateAgentLogs(lightPreset.title!, lightPreset.category!, lightLat, lightLng, lightPreset.severity!, 610, 180);
 
   return [
     {
-      id: 'issue-1',
-      title: potholePreset.title!,
-      category: potholePreset.category!,
-      severity: potholePreset.severity!,
-      confidence: potholePreset.confidence!,
-      infrastructure: potholePreset.infrastructure!,
-      description: potholePreset.description!,
-      hazards: potholePreset.hazards!,
-      latitude: potholeLat,
-      longitude: potholeLng,
-      priorityScore: 92, // Critical hospital priority
-      agentLogs: potholeLogs,
+      id: 'issue-1', title: potholePreset.title!, category: potholePreset.category!,
+      severity: potholePreset.severity!, confidence: potholePreset.confidence!,
+      infrastructure: potholePreset.infrastructure!, description: potholePreset.description!,
+      hazards: potholePreset.hazards!, latitude: potholeLat, longitude: potholeLng,
+      priorityScore: 92, agentLogs: potholeLogs,
       predictions: potholePreset.predictions as PredictionNode[],
-      plan: potholePreset.plan as RepairPlan,
-      status: 'investigated',
-      imageBefore: potholePreset.imageBefore!,
-      verificationCount: 2,
-      trustScore: 88,
-      createdAt: timestamp
+      plan: potholePreset.plan as RepairPlan, status: 'investigated',
+      imageBefore: potholePreset.imageBefore!, verificationCount: 2, trustScore: 88, createdAt: timestamp
     },
     {
-      id: 'issue-2',
-      title: leakagePreset.title!,
-      category: leakagePreset.category!,
-      severity: leakagePreset.severity!,
-      confidence: leakagePreset.confidence!,
-      infrastructure: leakagePreset.infrastructure!,
-      description: leakagePreset.description!,
-      hazards: leakagePreset.hazards!,
-      latitude: leakageLat,
-      longitude: leakageLng,
-      priorityScore: 68,
-      agentLogs: leakageLogs,
+      id: 'issue-2', title: leakagePreset.title!, category: leakagePreset.category!,
+      severity: leakagePreset.severity!, confidence: leakagePreset.confidence!,
+      infrastructure: leakagePreset.infrastructure!, description: leakagePreset.description!,
+      hazards: leakagePreset.hazards!, latitude: leakageLat, longitude: leakageLng,
+      priorityScore: 68, agentLogs: leakageLogs,
       predictions: leakagePreset.predictions as PredictionNode[],
-      plan: leakagePreset.plan as RepairPlan,
-      status: 'investigated',
-      imageBefore: leakagePreset.imageBefore!,
-      verificationCount: 1,
-      trustScore: 82,
-      createdAt: timestamp
+      plan: leakagePreset.plan as RepairPlan, status: 'investigated',
+      imageBefore: leakagePreset.imageBefore!, verificationCount: 1, trustScore: 82, createdAt: timestamp
     },
     {
-      id: 'issue-3',
-      title: lightPreset.title!,
-      category: lightPreset.category!,
-      severity: lightPreset.severity!,
-      confidence: lightPreset.confidence!,
-      infrastructure: lightPreset.infrastructure!,
-      description: lightPreset.description!,
-      hazards: lightPreset.hazards!,
-      latitude: lightLat,
-      longitude: lightLng,
-      priorityScore: 78, // High school priority
-      agentLogs: lightLogs,
+      id: 'issue-3', title: lightPreset.title!, category: lightPreset.category!,
+      severity: lightPreset.severity!, confidence: lightPreset.confidence!,
+      infrastructure: lightPreset.infrastructure!, description: lightPreset.description!,
+      hazards: lightPreset.hazards!, latitude: lightLat, longitude: lightLng,
+      priorityScore: 78, agentLogs: lightLogs,
       predictions: lightPreset.predictions as PredictionNode[],
-      plan: lightPreset.plan as RepairPlan,
-      status: 'investigated',
-      imageBefore: lightPreset.imageBefore!,
-      verificationCount: 3,
-      trustScore: 94,
-      createdAt: timestamp
+      plan: lightPreset.plan as RepairPlan, status: 'investigated',
+      imageBefore: lightPreset.imageBefore!, verificationCount: 3, trustScore: 94, createdAt: timestamp
     }
   ];
 };
 
-function App() {
+function AppContent() {
+  const { addToast } = useNotifications();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: DEFAULT_LAT, lng: DEFAULT_LNG });
   const [issues, setIssues] = useState<AnalysisResult[]>(() => createInitialIssues(DEFAULT_LAT, DEFAULT_LNG));
+  const [filteredIssues, setFilteredIssues] = useState<AnalysisResult[]>(issues);
   const [activeTab, setActiveTab] = useState<string>('digital-twin');
   const [selectedIssueId, setSelectedIssueId] = useState<string>('issue-1');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -148,7 +91,12 @@ function App() {
     return import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('civicmind_gemini_api_key') || '';
   });
   const [showKeyDrawer, setShowKeyDrawer] = useState(false);
-  
+  const [keyInputValue, setKeyInputValue] = useState('');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showIssueDetail, setShowIssueDetail] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [locationLabel, setLocationLabel] = useState('Detecting...');
+
   const [userPoints, setUserPoints] = useState(() => {
     const saved = localStorage.getItem('civicmind_user_points');
     return saved ? JSON.parse(saved) : { trust: 0, verification: 0, rank: 1 };
@@ -160,92 +108,193 @@ function App() {
   const [showProfileSetup, setShowProfileSetup] = useState(!localStorage.getItem('civicmind_username'));
   const [tempName, setTempName] = useState('');
 
-  // Geolocation trigger on mount
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
+    const detectLocation = async () => {
+      // 1. Try browser geolocation first
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true, timeout: 5000, maximumAge: 0
+            });
+          });
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           setUserLocation({ lat, lng });
           setIssues(createInitialIssues(lat, lng));
-        },
-        (error) => {
-          console.warn("Geolocation failed or denied, using defaults:", error);
-        },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-      );
-    }
+          // Reverse geocode for the label
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await res.json();
+            const city = data.address?.city || data.address?.town || data.address?.village || '';
+            const country = data.address?.country || '';
+            setLocationLabel([city, country].filter(Boolean).join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          } catch {
+            setLocationLabel(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          }
+          return;
+        } catch {
+          // Browser geolocation failed, try IP fallback
+        }
+      }
+
+      // 2. Fallback: IP-based geolocation via free APIs
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.latitude && data.longitude) {
+            setUserLocation({ lat: data.latitude, lng: data.longitude });
+            setIssues(createInitialIssues(data.latitude, data.longitude));
+            setLocationLabel(`${data.city || ''}, ${data.country_name || ''}`.replace(/^, /, '').trim() || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`);
+            return;
+          }
+        }
+      } catch {
+        // IP API 1 failed, try alternative
+      }
+
+      // 3. Fallback: second IP geolocation service
+      try {
+        const res = await fetch('https://ipwho.is/');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.latitude && data.longitude) {
+            setUserLocation({ lat: data.latitude, lng: data.longitude });
+            setIssues(createInitialIssues(data.latitude, data.longitude));
+            setLocationLabel(`${data.city || ''}, ${data.country || ''}`.replace(/^, /, '').trim() || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`);
+            return;
+          }
+        }
+      } catch {
+        // All methods failed — keep last-known location from localStorage
+      }
+
+      // 4. Final fallback: check localStorage for last known location
+      const saved = localStorage.getItem('civicmind_last_location');
+      if (saved) {
+        try {
+          const loc = JSON.parse(saved);
+          setUserLocation(loc);
+          setIssues(createInitialIssues(loc.lat, loc.lng));
+          setLocationLabel(`${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`);
+        } catch { /* ignore */ }
+      }
+
+      // 5. All auto-detection failed — show manual picker
+      setShowLocationPicker(true);
+      setLocationLabel('Manual Selection');
+    };
+
+    detectLocation();
+  }, []);
+
+  // Save location to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('civicmind_last_location', JSON.stringify(userLocation));
+  }, [userLocation]);
+
+  const handleLocationSelect = (lat: number, lng: number, label: string) => {
+    setUserLocation({ lat, lng });
+    setIssues(createInitialIssues(lat, lng));
+    setLocationLabel(label);
+    addToast(`Location set to ${label}`, 'success');
+  };
+
+  // Keep filtered issues in sync
+  useEffect(() => {
+    setFilteredIssues(issues);
+  }, [issues]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowKeyDrawer(false);
+        setShowIssueDetail(false);
+      }
+      // Number keys 1-6 for tab switching (only when not in input)
+      if (['1', '2', '3', '4', '5', '6'].includes(e.key) && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement)) {
+        const tabMap: Record<string, string> = { '1': 'digital-twin', '2': 'detection', '3': 'command-center', '4': 'authority', '5': 'analytics', '6': 'gamification' };
+        const tab = tabMap[e.key];
+        if (tab) setActiveTab(tab);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, []);
 
   const activeIssue = issues.find(i => i.id === selectedIssueId);
 
-  // New report handler
   const handleAnalysisStarted = () => {
     setIsAnalyzing(true);
-    setActiveTab('command-center'); // Instantly redirect to command center to show multi-agent flow
+    setActiveTab('command-center');
+    addToast('AI analysis initiated — agents are processing your report.', 'info');
   };
 
   const handleAnalysisComplete = (newIssue: AnalysisResult) => {
     setIssues(prev => [newIssue, ...prev]);
     setSelectedIssueId(newIssue.id);
     setIsAnalyzing(false);
+    addToast(`Issue "${newIssue.title}" analyzed and added to the queue.`, 'success');
   };
 
-  // Resolution verification handler
   const handleIssueResolved = (issueId: string, imageAfter: string) => {
     setIssues(prev => prev.map(issue => {
       if (issue.id === issueId) {
-        return {
-          ...issue,
-          status: 'resolved',
-          imageAfter
-        };
+        return { ...issue, status: 'resolved', imageAfter };
       }
       return issue;
     }));
-    
-    // Reward points for verification review
+
     setUserPoints((prev: any) => {
-      const next = {
-        ...prev,
-        trust: prev.trust + 50,
-        rank: Math.floor((prev.trust + 50) / 100) + 1
-      };
+      const next = { ...prev, trust: prev.trust + 50, rank: Math.floor((prev.trust + 50) / 100) + 1 };
       localStorage.setItem('civicmind_user_points', JSON.stringify(next));
       return next;
     });
+
+    addToast('Issue resolved! +50 Trust Points earned.', 'success');
   };
 
-  // Peer consensus verify vote handler
   const handleVerifyIssue = (issueId: string) => {
     setIssues(prev => prev.map(issue => {
       if (issue.id === issueId) {
-        return {
-          ...issue,
-          verificationCount: Math.min(4, issue.verificationCount + 1)
-        };
+        return { ...issue, verificationCount: Math.min(4, issue.verificationCount + 1) };
       }
       return issue;
     }));
 
     setUserPoints((prev: any) => {
-      const next = {
-        ...prev,
-        trust: prev.trust + 15,
-        verification: prev.verification + 1,
-        rank: Math.floor((prev.trust + 15) / 100) + 1
-      };
+      const next = { ...prev, trust: prev.trust + 15, verification: prev.verification + 1, rank: Math.floor((prev.trust + 15) / 100) + 1 };
       localStorage.setItem('civicmind_user_points', JSON.stringify(next));
       return next;
     });
+
+    addToast('Issue verified! +15 Trust Points earned.', 'success');
   };
 
-  const getUnresolvedCount = () => {
-    return issues.filter(i => i.status !== 'resolved').length;
+  const getUnresolvedCount = () => issues.filter(i => i.status !== 'resolved').length;
+
+  const getMaskedKey = (key: string) => {
+    if (!key) return '';
+    if (key.length <= 8) return '••••••••';
+    return key.substring(0, 4) + '••••' + key.substring(key.length - 4);
   };
 
-  // Sidebar link filtering based on Roles
+  const handleOpenKeyDrawer = () => {
+    setKeyInputValue('');
+    setShowKeyDrawer(true);
+  };
+
+  const handleSaveKey = () => {
+    if (keyInputValue.trim()) {
+      setApiKey(keyInputValue.trim());
+      localStorage.setItem('civicmind_gemini_api_key', keyInputValue.trim());
+      addToast('Gemini API key saved successfully.', 'success');
+    }
+    setShowKeyDrawer(false);
+  };
+
   const renderSidebarLinks = () => {
     const links = [
       { id: 'digital-twin', label: 'Digital Twin Map', icon: <Layers size={18} />, roles: ['citizen', 'official', 'volunteer', 'admin'] },
@@ -263,76 +312,116 @@ function App() {
           key={l.id}
           onClick={() => setActiveTab(l.id)}
           className={`sidebar-item ${activeTab === l.id ? 'active' : ''}`}
+          title={sidebarCollapsed ? l.label : undefined}
         >
           {l.icon}
-          {l.label}
+          {!sidebarCollapsed && l.label}
         </li>
       ));
   };
 
   return (
     <div className="app-container">
-      
       {/* Navigation Sidebar */}
-      <aside className="sidebar">
+      <aside className="sidebar" style={{
+        width: sidebarCollapsed ? '60px' : '270px',
+        transition: 'width 0.25s ease',
+        overflow: 'hidden'
+      }}>
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">
-            <Sparkles size={20} />
+            <Sparkles size={18} />
           </div>
-          <div>
-            <h1 className="sidebar-logo-text">CivicMind AI</h1>
-            <span style={{ fontSize: '0.65rem', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>
-              Urban OS Client
-            </span>
-          </div>
+          {!sidebarCollapsed && (
+            <div>
+              <h1 className="sidebar-logo-text">CivicMind</h1>
+              <span style={{ fontSize: '0.65rem', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+                Urban Intelligence OS
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Role Selector */}
-        <div className="form-group" style={{ marginBottom: '24px' }}>
-          <label className="form-label">System Access Clearance</label>
-          <select
-            className="form-select"
-            value={userRole}
-            onChange={(e) => {
-              const role = e.target.value;
-              setUserRole(role);
-              // Set default fallback tabs for specific roles
-              if (role === 'citizen') setActiveTab('digital-twin');
-              if (role === 'official') setActiveTab('digital-twin');
-              if (role === 'volunteer') setActiveTab('gamification');
-              if (role === 'admin') setActiveTab('command-center');
-            }}
-            style={{ width: '100%', fontSize: '0.8rem', padding: '10px' }}
-          >
-            <option value="citizen">👤 Citizen (Hyperlocal reporting)</option>
-            <option value="volunteer">🙋 Volunteer (Local consensus)</option>
-            <option value="official">🏢 Govt Official (Command & Control)</option>
-            <option value="admin">⚙️ Admin (Agent Orchestration)</option>
-          </select>
-        </div>
+        {!sidebarCollapsed && (
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label className="form-label">System Access</label>
+            <select
+              className="form-select"
+              value={userRole}
+              onChange={(e) => {
+                const role = e.target.value;
+                setUserRole(role);
+                if (role === 'citizen') setActiveTab('digital-twin');
+                if (role === 'official') setActiveTab('digital-twin');
+                if (role === 'volunteer') setActiveTab('gamification');
+                if (role === 'admin') setActiveTab('command-center');
+              }}
+              style={{ width: '100%', fontSize: '0.82rem' }}
+            >
+              <option value="citizen">👤 Citizen</option>
+              <option value="volunteer">🙋 Volunteer</option>
+              <option value="official">🏢 Official</option>
+              <option value="admin">⚙️ Admin</option>
+            </select>
+          </div>
+        )}
 
         <ul className="sidebar-menu">
           {renderSidebarLinks()}
         </ul>
 
-        {/* Profile Card Footer */}
-        <div className="sidebar-profile">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center' }}>
-              🎖️
-            </div>
-            <div>
-              <span style={{ fontWeight: 600, color: 'white', display: 'block' }}>{profileName || 'Hero'}</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>XP: {userPoints.trust} pts</span>
+        {!sidebarCollapsed && (
+          <div className="sidebar-profile">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
+              <div style={{
+                width: '34px', height: '34px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, var(--color-primary), var(--color-agent))',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', flexShrink: 0
+              }}>
+                🎖️
+              </div>
+              <div>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-main)', display: 'block', fontSize: '0.85rem' }}>
+                  {profileName || 'Hero'}
+                </span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>XP: {userPoints.trust} pts</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Sidebar collapse toggle */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          style={{
+            position: 'absolute',
+            right: '-12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 101,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+          }}
+        >
+          {sidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
       </aside>
 
       {/* Main Viewport */}
-      <main className="main-viewport">
-        
-        {/* Dynamic header and dashboard control */}
+      <main className="main-viewport" style={{
+        marginLeft: sidebarCollapsed ? '0' : undefined,
+        transition: 'margin 0.25s ease'
+      }}>
+
+        {/* Header */}
         <header className="dashboard-header">
           <div className="dashboard-title-area">
             <h1>
@@ -354,69 +443,129 @@ function App() {
           </div>
 
           <div className="dashboard-meta">
-            {/* API key widget drawer activator */}
+            {activeTab === 'analytics' && (
+              <ExportButton issues={issues} />
+            )}
+
             <button
-              onClick={() => setShowKeyDrawer(!showKeyDrawer)}
+              onClick={handleOpenKeyDrawer}
               className="btn"
               style={{
-                fontSize: '0.75rem',
-                padding: '8px 12px',
-                borderColor: apiKey ? 'var(--color-healthy)' : 'var(--border-subtle)',
-                color: apiKey ? 'var(--color-healthy)' : 'var(--color-text-muted)'
+                fontSize: '0.78rem', padding: '8px 14px',
+                borderColor: apiKey ? 'rgba(5, 150, 105, 0.2)' : 'var(--border-subtle)',
+                color: apiKey ? 'var(--color-healthy)' : 'var(--color-text-muted)',
+                background: apiKey ? 'rgba(5, 150, 105, 0.04)' : 'var(--bg-card)'
               }}
             >
               <Key size={14} />
-              {apiKey ? 'Gemini Live Active' : 'Configure Gemini Key'}
+              {apiKey ? '● Connected' : 'Configure Key'}
             </button>
 
-            {/* Unresolved count badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', padding: '6px 12px', borderRadius: '10px' }}>
-              <Bell size={14} style={{ color: 'var(--color-warning)' }} />
-              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{getUnresolvedCount()} active cases</span>
+            <NotificationBell issues={issues} />
+
+            {/* Location indicator — click to change location */}
+            <button
+              onClick={() => setShowLocationPicker(true)}
+              className="btn"
+              style={{
+                fontSize: '0.78rem', padding: '8px 14px', gap: '6px',
+                borderColor: 'rgba(8, 145, 178, 0.2)',
+                color: 'var(--color-geo)',
+                background: 'rgba(8, 145, 178, 0.04)'
+              }}
+            >
+              <NavigationIcon size={14} />
+              {locationLabel}
+            </button>
+
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
+              padding: '8px 14px', borderRadius: '10px'
+            }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>
+                {getUnresolvedCount()} active
+              </span>
             </div>
           </div>
         </header>
 
-        {/* Gemini API Key configuration drawer slider overlay */}
+        {/* API Key Configuration Drawer */}
         {showKeyDrawer && (
-          <div className="glass-panel animate-slide-up" style={{ background: 'rgba(10, 15, 30, 0.95)', border: '1px solid var(--color-primary)', padding: '16px', borderRadius: '12px' }}>
-            <h3 style={{ fontSize: '0.95rem', color: 'white', marginBottom: '8px' }}>Integrate Custom Gemini AI Key</h3>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
-              Entering a Gemini developer API Key allows the Smart Detection Portal to query real vision models on uploaded images instead of simulating output. Keys are stored safely in local memory.
-            </p>
-            <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="glass-panel key-drawer-overlay animate-slide-up" style={{ padding: '20px', borderRadius: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', color: 'var(--color-text-main)', marginBottom: '4px' }}>
+                  Gemini API Configuration
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: '1.5', maxWidth: '500px' }}>
+                  Enter a Gemini developer API Key to enable real vision analysis on uploaded images. Keys are stored locally in your browser.
+                </p>
+              </div>
+              {apiKey && (
+                <span className="badge badge-healthy" style={{ fontSize: '0.65rem' }}>
+                  ● Currently Active
+                </span>
+              )}
+            </div>
+
+            <div style={{
+              display: 'flex', gap: '10px', alignItems: 'center',
+              background: 'var(--bg-deep)', border: '1px solid var(--border-subtle)',
+              borderRadius: '10px', padding: '4px 4px 4px 14px'
+            }}>
+              <Key size={14} style={{ color: 'var(--color-text-dark)', flexShrink: 0 }} />
               <input
                 type="password"
-                className="form-input"
-                placeholder="AIzaSy..."
-                value={apiKey}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setApiKey(val);
-                  localStorage.setItem('civicmind_gemini_api_key', val);
-                }}
-                style={{ flexGrow: 1, fontSize: '0.8rem' }}
+                className="form-input api-key-masked"
+                placeholder="Enter your Gemini API key..."
+                value={keyInputValue}
+                onChange={(e) => setKeyInputValue(e.target.value)}
+                style={{ flexGrow: 1, fontSize: '0.82rem', border: 'none', background: 'transparent', boxShadow: 'none', padding: '10px 0' }}
+                autoFocus
               />
-              <button onClick={() => setShowKeyDrawer(false)} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
-                Save & Close
+              <button onClick={handleSaveKey} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.82rem', borderRadius: '8px', flexShrink: 0 }}>
+                Save
+              </button>
+              <button onClick={() => setShowKeyDrawer(false)} className="btn" style={{ padding: '10px 14px', fontSize: '0.82rem', borderRadius: '8px', flexShrink: 0 }}>
+                Cancel
               </button>
             </div>
+
+            {apiKey && (
+              <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Shield size={13} style={{ color: 'var(--color-text-dark)' }} />
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-text-dark)' }}>
+                  Key stored locally: {getMaskedKey(apiKey)}
+                </span>
+                <button
+                  onClick={() => {
+                    setApiKey('');
+                    localStorage.removeItem('civicmind_gemini_api_key');
+                    addToast('Gemini API key removed.', 'warning');
+                  }}
+                  style={{ fontSize: '0.72rem', color: 'var(--color-critical)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, padding: '2px 4px' }}
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Dynamic Tab Renderer */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', flexGrow: 1 }}>
+        {/* Global Search Bar — shown on map, authority, and analytics tabs */}
+        {(activeTab === 'digital-twin' || activeTab === 'authority' || activeTab === 'analytics') && (
+          <IssueSearchBar issues={issues} onFiltered={setFilteredIssues} />
+        )}
+
+        {/* Tab Content */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', flexGrow: 1 }} key={activeTab} className="animate-slide-up">
           {activeTab === 'digital-twin' && (
             <DigitalTwinMap
-              issues={issues}
+              issues={filteredIssues}
               onSelectIssue={(issue) => {
                 setSelectedIssueId(issue.id);
-                // Based on role, redirect to appropriate detailed portal
-                if (userRole === 'official' || userRole === 'admin') {
-                  setActiveTab('authority');
-                } else if (userRole === 'volunteer') {
-                  setActiveTab('gamification');
-                }
+                setShowIssueDetail(true);
               }}
               selectedIssueId={selectedIssueId}
               userLocation={userLocation}
@@ -444,17 +593,18 @@ function App() {
 
           {activeTab === 'authority' && (
             <AuthorityPortal
-              issues={issues}
-              onSelectIssue={(issue) => setSelectedIssueId(issue.id)}
+              issues={filteredIssues}
+              onSelectIssue={(issue) => {
+                setSelectedIssueId(issue.id);
+                setShowIssueDetail(true);
+              }}
               selectedIssue={activeIssue}
               onIssueResolved={handleIssueResolved}
             />
           )}
 
           {activeTab === 'analytics' && (
-            <AnalyticsPanel
-              issues={issues}
-            />
+            <AnalyticsPanel issues={filteredIssues} />
           )}
 
           {activeTab === 'gamification' && (
@@ -467,56 +617,89 @@ function App() {
           )}
         </div>
 
+        {/* Issue Detail Panel — shows timeline + comments for selected issue */}
+        {showIssueDetail && activeIssue && (activeTab === 'digital-twin' || activeTab === 'authority') && (
+          <div
+            className="glass-panel animate-slide-up"
+            style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span className={`badge ${activeIssue.status === 'resolved' ? 'badge-healthy' : 'badge-info'}`} style={{ fontSize: '0.6rem' }}>
+                    {activeIssue.status.toUpperCase()}
+                  </span>
+                  <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text-main)', marginTop: '4px' }}>
+                    {activeIssue.title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowIssueDetail(false)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--color-text-dark)', fontSize: '0.72rem', fontWeight: 500,
+                    padding: '4px 8px', borderRadius: '6px'
+                  }}
+                >
+                  ✕ Close
+                </button>
+              </div>
+              <IssueTimeline issue={activeIssue} />
+            </div>
+            <IssueComments issueId={activeIssue.id} profileName={profileName} />
+          </div>
+        )}
+
       </main>
 
+      {/* Location Picker Modal */}
+      <LocationPicker
+        isOpen={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        onLocationSelect={handleLocationSelect}
+        currentLocation={userLocation}
+      />
+
+      {/* Quick Report FAB */}
+      <QuickReportFAB onNavigateToReport={() => setActiveTab('detection')} />
+
+      {/* Profile Setup Modal */}
       {showProfileSetup && (
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(3, 5, 12, 0.9)',
-          backdropFilter: 'blur(20px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '24px'
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(245, 246, 248, 0.92)', backdropFilter: 'blur(16px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, padding: '24px'
         }}>
-          <div className="glass-panel animate-slide-up" style={{ maxWidth: '420px', width: '100%', border: '1px solid var(--color-primary)', display: 'flex', flexDirection: 'column', gap: '20px', padding: '32px' }}>
+          <div className="glass-panel animate-slide-up" style={{
+            maxWidth: '420px', width: '100%', display: 'flex', flexDirection: 'column',
+            gap: '20px', padding: '36px', borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.06)'
+          }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{
                 background: 'linear-gradient(135deg, var(--color-primary), var(--color-agent))',
-                width: '60px',
-                height: '60px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-                fontSize: '1.8rem',
-                color: 'white',
-                boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)'
+                width: '56px', height: '56px', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 16px', fontSize: '1.6rem', color: 'white',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
               }}>
                 🎖️
               </div>
-              <h2 style={{ fontSize: '1.5rem', color: 'white', fontFamily: 'var(--font-heading)' }}>Initialize Hero Persona</h2>
-              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '6px' }}>
-                Welcome to CivicMind AI. To register your local validation contributions, create your Community Hero identity.
+              <h2 style={{ fontSize: '1.35rem', color: 'var(--color-text-main)', fontFamily: 'var(--font-heading)' }}>
+                Initialize Hero Persona
+              </h2>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '8px', lineHeight: '1.5' }}>
+                Welcome to CivicMind. Create your Community Hero identity to register local validation contributions.
               </p>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Profile / Call Sign Name</label>
+              <label className="form-label">Profile Name</label>
               <input
-                type="text"
-                className="form-input"
-                placeholder="Enter your name..."
-                value={tempName}
-                onChange={(e) => setTempName(e.target.value)}
-                maxLength={20}
-                required
+                type="text" className="form-input" placeholder="Enter your name..."
+                value={tempName} onChange={(e) => setTempName(e.target.value)}
+                maxLength={20} required
               />
             </div>
 
@@ -527,18 +710,27 @@ function App() {
                   localStorage.setItem('civicmind_username', cleaned);
                   setProfileName(cleaned);
                   setShowProfileSetup(false);
+                  addToast(`Welcome, ${cleaned}! Your hero profile is ready.`, 'success');
                 }
               }}
               className="btn btn-primary"
-              style={{ padding: '12px', justifyContent: 'center' }}
+              style={{ padding: '12px', justifyContent: 'center', borderRadius: '10px' }}
             >
-              Sync Persona & Enter Urban OS
+              Sync Persona & Enter
             </button>
           </div>
         </div>
       )}
-
     </div>
+  );
+}
+
+function App() {
+  return (
+    <NotificationProvider>
+      <AppContent />
+      <ToastContainer />
+    </NotificationProvider>
   );
 }
 

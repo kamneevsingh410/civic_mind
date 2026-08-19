@@ -1,4 +1,4 @@
-// CivicMind AI — Gemini & Agent Intelligence Service
+// CivicMind — Gemini & Agent Intelligence Service
 
 export interface AgentLog {
   agentName: string;
@@ -266,7 +266,7 @@ export const analyzeIssueWithGemini = async (
               {
                 parts: [
                   {
-                    text: `You are the core of CivicMind AI, an Autonomous Civic Intelligence Platform.
+                    text: `You are the core of CivicMind, an Autonomous Civic Intelligence Platform.
 Analyze the user's report.
 Description provided: "${textDescription || "No description provided."}"
 

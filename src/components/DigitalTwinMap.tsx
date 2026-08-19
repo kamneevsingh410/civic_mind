@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { AnalysisResult } from '../services/geminiService';
-import { CheckCircle, Layers, Shield, Compass, Navigation } from 'lucide-react';
+import { MapLayerControls, getTileUrl, type MapStyle } from './MapLayerControls';
+import { CheckCircle, Layers, Shield, Compass, Navigation as NavigationIcon } from 'lucide-react';
 
 interface DigitalTwinMapProps {
   issues: AnalysisResult[];
@@ -18,12 +19,12 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
   onReportAtCoords
 }) => {
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapStyle, setMapStyle] = useState<MapStyle>('positron');
   const [localAddress, setLocalAddress] = useState<string>("Locating neighborhood...");
 
   const mapContainerRef = React.useRef<HTMLDivElement>(null);
   const mapInstanceRef = React.useRef<any>(null);
 
-  // Reverse geocode user location
   useEffect(() => {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
       .then(res => res.json())
@@ -39,9 +40,7 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
       });
   }, [userLocation]);
 
-  // Dynamic Leaflet Assets Injection
   React.useEffect(() => {
-    // Inject Leaflet CSS
     if (!document.getElementById('leaflet-css')) {
       const link = document.createElement('link');
       link.id = 'leaflet-css';
@@ -50,7 +49,6 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
       document.head.appendChild(link);
     }
 
-    // Inject Leaflet JS
     if (!document.getElementById('leaflet-js')) {
       const script = document.createElement('script');
       script.id = 'leaflet-js';
@@ -65,7 +63,6 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
     }
   }, []);
 
-  // Leaflet Map instance updates
   React.useEffect(() => {
     if (!mapLoaded || !mapContainerRef.current) return;
     const L = (window as any).L;
@@ -75,32 +72,31 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
       mapInstanceRef.current.remove();
     }
 
-    // Centered at geolocated user coordinates
     const map = L.map(mapContainerRef.current, { doubleClickZoom: false }).setView([userLocation.lat, userLocation.lng], 14);
     mapInstanceRef.current = map;
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    const tileUrl = getTileUrl(mapStyle);
+    const tileLayer = L.tileLayer(tileUrl, {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     }).addTo(map);
+    (map as any)._tileLayer = tileLayer;
 
-    // Plot pins
     issues.forEach(issue => {
       const isResolved = issue.status === 'resolved';
       const color = isResolved
-        ? 'var(--color-healthy)'
+        ? '#059669'
         : issue.priorityScore > 80
-          ? 'var(--color-critical)'
-          : 'var(--color-warning)';
+          ? '#dc2626'
+          : '#d97706';
 
       const markerHtml = `
-        <div class="${selectedIssueId === issue.id ? 'animate-pulse-glow' : ''}" style="
+        <div style="
           width: 14px; 
           height: 14px; 
           background: ${color}; 
           border-radius: 50%; 
-          border: 2px solid var(--bg-deep); 
-          box-shadow: 0 0 10px ${color};
-          --glow-color: ${color};
+          border: 2.5px solid white; 
+          box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         "></div>
       `;
 
@@ -117,16 +113,14 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
       });
       marker.addTo(map);
 
-      // Bind popup info
       marker.bindPopup(`
-        <div style="color:white; font-family:var(--font-body); font-size:0.75rem; line-height: 1.4;">
-          <strong style="display:block;margin-bottom:2px;font-family:var(--font-heading); color:#ffffff">${issue.title}</strong>
-          <span>Priority Rating: ${issue.priorityScore}/100</span><br/>
+        <div style="color: var(--color-text-main, #1e293b); font-size: 0.75rem; line-height: 1.4;">
+          <strong style="display:block;margin-bottom:2px; color: #1e293b">${issue.title}</strong>
+          <span>Priority: ${issue.priorityScore}/100</span><br/>
           <span>Status: ${issue.status.toUpperCase()}</span>
         </div>
       `, {
         closeButton: false,
-        className: 'custom-leaflet-popup'
       });
 
       if (selectedIssueId === issue.id) {
@@ -134,7 +128,6 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
       }
     });
 
-    // Add double-click coordinates node picker
     map.on('dblclick', (e: any) => {
       const { lat, lng } = e.latlng;
 
@@ -147,21 +140,21 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
           L.popup()
             .setLatLng(e.latlng)
             .setContent(`
-              <div style="color:white; font-family:var(--font-body); font-size:0.72rem; min-width:150px; line-height:1.4;">
-                <strong style="color:var(--color-primary); display:block; margin-bottom:4px;">📍 Selected GPS Node</strong>
+              <div style="font-size:0.72rem; min-width:150px; line-height:1.4;">
+                <strong style="color:#2563eb; display:block; margin-bottom:4px;">📍 Selected GPS Node</strong>
                 <span>Street: ${street}</span><br/>
                 <span>City: ${city}</span><br/>
-                <span style="color:var(--color-text-dark); font-size:0.65rem; display:block; margin-bottom:6px;">Coords: ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>
+                <span style="color:#94a3b8; font-size:0.65rem; display:block; margin-bottom:6px;">Coords: ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>
                 <button id="report-here-btn" style="
                   width: 100%;
                   padding: 6px;
-                  background: var(--color-primary);
+                  background: #2563eb;
                   border: none;
-                  border-radius: 4px;
+                  border-radius: 6px;
                   color: white;
                   font-weight: 600;
                   cursor: pointer;
-                  font-size: 0.7rem;
+                  font-size: 0.72rem;
                 ">⚠️ Report Issue Here</button>
               </div>
             `)
@@ -171,19 +164,19 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
           L.popup()
             .setLatLng(e.latlng)
             .setContent(`
-              <div style="color:white; font-size:0.75rem; min-width:150px; line-height:1.4;">
+              <div style="font-size:0.75rem; min-width:150px; line-height:1.4;">
                 <span>Coordinate: ${lat.toFixed(5)}, ${lng.toFixed(5)}</span><br/>
                 <button id="report-here-btn" style="
                   margin-top: 8px;
                   width: 100%;
                   padding: 6px;
-                  background: var(--color-primary);
+                  background: #2563eb;
                   border: none;
-                  border-radius: 4px;
+                  border-radius: 6px;
                   color: white;
                   font-weight: 600;
                   cursor: pointer;
-                  font-size: 0.7rem;
+                  font-size: 0.72rem;
                 ">⚠️ Report Issue Here</button>
               </div>
             `)
@@ -207,9 +200,8 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
         mapInstanceRef.current = null;
       }
     };
-  }, [mapLoaded, issues, selectedIssueId, userLocation]);
+  }, [mapLoaded, issues, selectedIssueId, userLocation, mapStyle]);
 
-  // Compute dynamic health indices for the local district based on unresolved active issues
   const activeIssues = issues.filter(i => i.status !== 'resolved');
   const resolvedIssues = issues.filter(i => i.status === 'resolved');
   
@@ -228,99 +220,106 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
     <div className="glass-panel col-12" style={{ display: 'flex', flexDirection: 'column', gap: '20px', minHeight: '560px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Layers size={22} style={{ color: 'var(--color-primary)' }} />
-            CivicMind AI — Real-World GIS Map
+          <h2 style={{ fontSize: '1.3rem', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Layers size={20} style={{ color: 'var(--color-primary)' }} />
+            CivicMind — Real-World GIS Map
           </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-            Dynamic geolocation overlay. Centered around your neighborhood node with active municipal telemetry.
+          <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+            Dynamic geolocation overlay centered around your neighborhood with active municipal telemetry.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
-          <Navigation size={14} style={{ color: 'var(--color-primary)' }} />
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'white' }}>GPS: {userLocation.lat.toFixed(5)}, {userLocation.lng.toFixed(5)}</span>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <MapLayerControls activeStyle={mapStyle} onStyleChange={setMapStyle} />
+          <div style={{ 
+            display: 'flex', 
+            gap: '8px', 
+            alignItems: 'center', 
+            background: 'var(--bg-deep)', 
+            padding: '8px 14px', 
+            borderRadius: '10px', 
+            border: '1px solid var(--border-subtle)' 
+          }}>
+            <NavigationIcon size={13} style={{ color: 'var(--color-primary)' }} />
+            <span style={{ fontSize: '0.72rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>
+              GPS: {userLocation.lat.toFixed(5)}, {userLocation.lng.toFixed(5)}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', flexGrow: 1 }}>
-        {/* Map Rendering Container */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px', flexGrow: 1 }}>
+        {/* Map Container */}
         <div style={{
           position: 'relative',
-          background: 'rgba(5, 7, 16, 0.6)',
-          border: '1px solid rgba(255,255,255,0.04)',
+          background: '#e8ecf0',
+          border: '1px solid var(--border-subtle)',
           borderRadius: '12px',
           overflow: 'hidden',
           minHeight: '420px',
-          boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)',
           display: 'flex'
         }}>
           <div ref={mapContainerRef} style={{ width: '100%', height: '100%', minHeight: '420px', zIndex: 1 }} />
         </div>
 
-        {/* Sidebar Info - Local stats and telemetry summary */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="glass-panel" style={{ background: 'rgba(255,255,255,0.01)', flexGrow: 1, padding: '16px' }}>
-            <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                <Compass size={14} /> Local District Node
+        {/* Sidebar Stats */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="glass-panel" style={{ flexGrow: 1, padding: '16px' }}>
+            <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <Compass size={13} /> Local District Node
               </div>
-              <h3 style={{ fontSize: '1rem', color: 'white', marginTop: '6px', wordBreak: 'break-word' }}>
+              <h3 style={{ fontSize: '0.95rem', color: 'var(--color-text-main)', marginTop: '6px', wordBreak: 'break-word' }}>
                 {localAddress}
               </h3>
             </div>
 
-            {/* Overall District Health */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.03)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: getHealthColor(overallHealth) }}>
+            {/* Overall Health */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '12px', 
+              background: 'var(--bg-deep)', 
+              padding: '12px', 
+              borderRadius: '10px', 
+              marginBottom: '16px', 
+              border: '1px solid var(--border-subtle)' 
+            }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: getHealthColor(overallHealth) }}>
                 {overallHealth}%
               </div>
               <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>District Integrity Score</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block' }}>District Integrity</span>
                 <span style={{ fontSize: '0.65rem', color: getHealthColor(overallHealth), fontWeight: 600 }}>
-                  {overallHealth >= 85 ? 'Healthy Grid Status' : overallHealth >= 65 ? 'Elevated Alert Level' : 'Critical Grid Outage'}
+                  {overallHealth >= 85 ? 'Healthy Grid' : overallHealth >= 65 ? 'Elevated Alert' : 'Critical Outage'}
                 </span>
               </div>
             </div>
 
-            {/* Local Health Metrics */}
+            {/* Health Bars */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
-                  <span style={{ color: 'var(--color-text-muted)' }}>Road & Transport Health</span>
-                  <span style={{ fontWeight: 600, color: getHealthColor(roadHealth) }}>{roadHealth}%</span>
+              {[
+                { label: 'Road & Transport', value: roadHealth },
+                { label: 'Water & Utilities', value: waterHealth },
+                { label: 'Electrical Grid', value: electricalHealth }
+              ].map((item) => (
+                <div key={item.label}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '4px' }}>
+                    <span style={{ color: 'var(--color-text-muted)' }}>{item.label}</span>
+                    <span style={{ fontWeight: 600, color: getHealthColor(item.value) }}>{item.value}%</span>
+                  </div>
+                  <div style={{ height: '4px', background: 'rgba(0,0,0,0.05)', borderRadius: '2px' }}>
+                    <div className="health-bar-fill" style={{ height: '100%', background: getHealthColor(item.value), width: `${item.value}%`, borderRadius: '2px' }} />
+                  </div>
                 </div>
-                <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }}>
-                  <div style={{ height: '100%', background: getHealthColor(roadHealth), width: `${roadHealth}%`, borderRadius: '2px' }} />
-                </div>
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
-                  <span style={{ color: 'var(--color-text-muted)' }}>Water & Utilities Integrity</span>
-                  <span style={{ fontWeight: 600, color: getHealthColor(waterHealth) }}>{waterHealth}%</span>
-                </div>
-                <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }}>
-                  <div style={{ height: '100%', background: getHealthColor(waterHealth), width: `${waterHealth}%`, borderRadius: '2px' }} />
-                </div>
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
-                  <span style={{ color: 'var(--color-text-muted)' }}>Electrical & Lighting Grid</span>
-                  <span style={{ fontWeight: 600, color: getHealthColor(electricalHealth) }}>{electricalHealth}%</span>
-                </div>
-                <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }}>
-                  <div style={{ height: '100%', background: getHealthColor(electricalHealth), width: `${electricalHealth}%`, borderRadius: '2px' }} />
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Asset Safety Safe-Zones */}
-            <div style={{ marginTop: '20px' }}>
-              <h4 style={{ fontSize: '0.8rem', color: 'white', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Shield size={14} style={{ color: 'var(--color-primary)' }} />
-                Active Proximity Cases ({activeIssues.length})
+            {/* Active Cases */}
+            <div style={{ marginTop: '18px' }}>
+              <h4 style={{ fontSize: '0.78rem', color: 'var(--color-text-main)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Shield size={13} style={{ color: 'var(--color-primary)' }} />
+                Active Cases ({activeIssues.length})
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {activeIssues.length > 0 ? (
@@ -328,20 +327,26 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
                     <div
                       key={issue.id}
                       onClick={() => onSelectIssue(issue)}
+                      className="map-sidebar-card"
                       style={{
-                        fontSize: '0.75rem',
+                        fontSize: '0.72rem',
                         padding: '8px 10px',
-                        background: selectedIssueId === issue.id ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)',
-                        border: `1px solid ${selectedIssueId === issue.id ? 'var(--color-primary)' : 'rgba(255,255,255,0.03)'}`,
-                        borderRadius: '6px',
-                        color: 'var(--color-text-muted)',
-                        cursor: 'pointer',
+                        background: selectedIssueId === issue.id ? 'rgba(37, 99, 235, 0.05)' : 'var(--bg-deep)',
+                        border: `1px solid ${selectedIssueId === issue.id ? 'rgba(37, 99, 235, 0.15)' : 'var(--border-subtle)'}`,
+                        borderRadius: '8px',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
                       }}
                     >
-                      <span style={{ color: 'white', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '140px' }}>
+                      <span style={{ 
+                        color: 'var(--color-text-main)', 
+                        fontWeight: 500,
+                        textOverflow: 'ellipsis', 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        maxWidth: '140px' 
+                      }}>
                         {issue.title}
                       </span>
                       <span className={`badge ${issue.priorityScore > 80 ? 'badge-critical' : 'badge-warning'}`} style={{ fontSize: '0.6rem', padding: '2px 6px' }}>
@@ -350,32 +355,32 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
                     </div>
                   ))
                 ) : (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-healthy)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <CheckCircle size={14} /> Telemetry running green. No active anomalies.
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-healthy)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <CheckCircle size={13} /> All clear — no active anomalies.
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Resolved History */}
+            {/* Resolved */}
             {resolvedIssues.length > 0 && (
-              <div style={{ marginTop: '16px' }}>
-                <h4 style={{ fontSize: '0.8rem', color: 'white', marginBottom: '8px' }}>
+              <div style={{ marginTop: '14px' }}>
+                <h4 style={{ fontSize: '0.78rem', color: 'var(--color-text-main)', marginBottom: '8px' }}>
                   Recently Resolved ({resolvedIssues.length})
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                   {resolvedIssues.map(issue => (
                     <div
                       key={issue.id}
                       onClick={() => onSelectIssue(issue)}
+                      className="map-sidebar-card"
                       style={{
-                        fontSize: '0.75rem',
+                        fontSize: '0.72rem',
                         padding: '6px 10px',
-                        background: 'rgba(16, 185, 129, 0.05)',
-                        border: '1px solid rgba(16, 185, 129, 0.2)',
-                        borderRadius: '6px',
+                        background: 'rgba(5, 150, 105, 0.03)',
+                        border: '1px solid rgba(5, 150, 105, 0.12)',
+                        borderRadius: '8px',
                         color: 'var(--color-healthy)',
-                        cursor: 'pointer',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'

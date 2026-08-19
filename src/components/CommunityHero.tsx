@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import type { AnalysisResult } from '../services/geminiService';
 import { Award, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
-
 interface CommunityHeroProps {
   issues: AnalysisResult[];
   onVerifyIssue: (issueId: string) => void;
@@ -33,13 +32,10 @@ export const CommunityHero: React.FC<CommunityHeroProps> = ({
     { name: "David Kim", points: 210, rank: "Active Neighbor", verifiedCount: 8 }
   ].sort((a, b) => b.points - a.points);
 
-
-  // Get issues that are not resolved yet and need validation
   const unverifiedIssues = issues.filter(i => i.status !== 'resolved');
 
   const handleVote = (issueId: string) => {
     if (votedIssues[issueId]) return;
-    
     setVotedIssues(prev => ({ ...prev, [issueId]: true }));
     onVerifyIssue(issueId);
   };
@@ -47,63 +43,71 @@ export const CommunityHero: React.FC<CommunityHeroProps> = ({
   return (
     <div className="dashboard-grid">
       
-      {/* Citizen Hero Profile Stats */}
+      {/* Hero Profile */}
       <div className="glass-panel col-4" style={{ display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{
             background: 'linear-gradient(135deg, var(--color-primary), var(--color-agent))',
-            width: '64px',
-            height: '64px',
+            width: '58px',
+            height: '58px',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.8rem',
+            fontSize: '1.5rem',
             color: 'white',
-            boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)'
+            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.2)'
           }}>
             🎖️
           </div>
           <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>Hero Status</span>
-            <h3 style={{ fontSize: '1.25rem', color: 'white' }}>District Protector</h3>
-            <span className="badge badge-agent" style={{ fontSize: '0.65rem', marginTop: '4px' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block' }}>Hero Status</span>
+            <h3 style={{ fontSize: '1.15rem', color: 'var(--color-text-main)' }}>District Protector</h3>
+            <span className="badge badge-agent" style={{ fontSize: '0.62rem', marginTop: '4px' }}>
               Level {Math.floor(userPoints.trust / 100) + 1}
             </span>
           </div>
         </div>
 
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', display: 'block' }}>Trust Score</span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-healthy)' }}>
+            <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', display: 'block' }}>Trust Score</span>
+            <span style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--color-healthy)' }}>
               {userPoints.trust} pts
             </span>
           </div>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', display: 'block' }}>Verifications</span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+            <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', display: 'block' }}>Verifications</span>
+            <span style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--color-primary)' }}>
               {userPoints.verification} reports
             </span>
           </div>
         </div>
 
-        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'rgba(255,255,255,0.01)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
-          💡 Earn +15 Trust Points for confirming or reporting fake incidents in your neighborhood coordinates.
+        <div style={{ 
+          fontSize: '0.72rem', 
+          color: 'var(--color-text-muted)', 
+          background: 'var(--bg-deep)', 
+          padding: '10px', 
+          borderRadius: '8px', 
+          border: '1px solid var(--border-subtle)',
+          lineHeight: '1.4'
+        }}>
+          💡 Earn +15 Trust Points for confirming or flagging incidents in your neighborhood.
         </div>
       </div>
 
-      {/* Neighbor validation Consensus queue (Active consensus actions) */}
-      <div className="glass-panel col-8" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <h3 style={{ fontSize: '1.1rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ShieldCheck size={20} style={{ color: 'var(--color-healthy)' }} />
-          Hyperlocal Peer Consensus Grid
+      {/* Peer Consensus Grid */}
+      <div className="glass-panel col-8" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <h3 style={{ fontSize: '1.05rem', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ShieldCheck size={18} style={{ color: 'var(--color-healthy)' }} />
+          Peer Consensus Grid
         </h3>
-        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-          The system detected active anomalies within walking distance of your current position. Check and verify them.
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+          Active anomalies near your position. Check and verify them to earn trust points.
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {unverifiedIssues.length > 0 ? (
             unverifiedIssues.map(issue => {
               const hasVoted = votedIssues[issue.id];
@@ -111,9 +115,9 @@ export const CommunityHero: React.FC<CommunityHeroProps> = ({
                 <div
                   key={issue.id}
                   style={{
-                    padding: '16px',
-                    background: 'rgba(255,255,255,0.01)',
-                    border: '1px solid rgba(255,255,255,0.04)',
+                    padding: '14px',
+                    background: 'var(--bg-deep)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '10px',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -122,26 +126,36 @@ export const CommunityHero: React.FC<CommunityHeroProps> = ({
                     gap: '12px'
                   }}
                 >
-                  <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                    <img src={issue.imageBefore} alt={issue.title} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <img 
+                      src={issue.imageBefore} 
+                      alt={issue.title} 
+                      style={{ 
+                        width: '56px', 
+                        height: '56px', 
+                        borderRadius: '8px', 
+                        objectFit: 'cover',
+                        border: '1px solid var(--border-subtle)'
+                      }} 
+                    />
                     <div>
-                      <h4 style={{ fontSize: '0.9rem', color: 'white' }}>{issue.title}</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                        Category: {issue.category} • Located approx. <span style={{ color: 'white', fontWeight: 600 }}>120 meters</span> away
+                      <h4 style={{ fontSize: '0.88rem', color: 'var(--color-text-main)' }}>{issue.title}</h4>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                        {issue.category} • ~<span style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>120m</span> away
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-dark)' }}>Consensus Signature:</span>
-                        <span className="badge badge-warning" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--color-text-dark)' }}>Consensus:</span>
+                        <span className="badge badge-warning" style={{ fontSize: '0.58rem', padding: '2px 6px' }}>
                           {issue.verificationCount} / 4 Verified
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
                     {hasVoted ? (
-                      <span style={{ fontSize: '0.8rem', color: 'var(--color-healthy)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                        <CheckCircle2 size={16} /> Verified (+15 XP)
+                      <span style={{ fontSize: '0.78rem', color: 'var(--color-healthy)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
+                        <CheckCircle2 size={14} /> Verified (+15 XP)
                       </span>
                     ) : (
                       <>
@@ -150,21 +164,23 @@ export const CommunityHero: React.FC<CommunityHeroProps> = ({
                           onClick={() => handleVote(issue.id)}
                           className="btn"
                           style={{
-                            padding: '6px 12px', fontSize: '0.75rem',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            padding: '6px 12px', 
+                            fontSize: '0.72rem',
+                            background: 'rgba(5, 150, 105, 0.05)',
+                            border: '1px solid rgba(5, 150, 105, 0.12)',
                             color: 'var(--color-healthy)'
                           }}
                         >
-                          🟢 Confirm Issue
+                          🟢 Confirm
                         </button>
                         <button
                           type="button"
                           className="btn"
                           style={{
-                            padding: '6px 12px', fontSize: '0.75rem',
-                            background: 'rgba(239, 68, 68, 0.05)',
-                            border: '1px solid rgba(239, 68, 68, 0.1)',
+                            padding: '6px 12px', 
+                            fontSize: '0.72rem',
+                            background: 'rgba(220, 38, 38, 0.03)',
+                            border: '1px solid rgba(220, 38, 38, 0.08)',
                             color: 'var(--color-critical)'
                           }}
                         >
@@ -177,44 +193,44 @@ export const CommunityHero: React.FC<CommunityHeroProps> = ({
               );
             })
           ) : (
-            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-dark)', fontSize: '0.85rem' }}>
-              No pending neighborhood consensus requests. You are fully synced!
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-dark)', fontSize: '0.82rem' }}>
+              All synced — no pending consensus requests.
             </div>
           )}
         </div>
       </div>
 
-      {/* Leaderboard panel */}
-      <div className="glass-panel col-12" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <h3 style={{ fontSize: '1.1rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Award size={20} style={{ color: 'var(--color-warning)' }} />
+      {/* Leaderboard */}
+      <div className="glass-panel col-12" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <h3 style={{ fontSize: '1.05rem', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Award size={18} style={{ color: 'var(--color-warning)' }} />
           Community Heroes Leaderboard
         </h3>
         <div className="data-table-container">
           <table className="data-table">
             <thead>
               <tr>
-                <th>NEIGHBORHOOD RANK</th>
-                <th>MEMBER NAME</th>
-                <th>COMMUNITY TITLE</th>
-                <th>REPORTS VERIFIED</th>
-                <th>TOTAL TRUST POINTS</th>
+                <th>Rank</th>
+                <th>Member</th>
+                <th>Title</th>
+                <th>Verified</th>
+                <th>Points</th>
               </tr>
             </thead>
             <tbody>
               {dynamicLeaderboard.map((hero, idx) => {
                 const isCurrentUser = hero.name.includes("You");
                 return (
-                  <tr key={idx} style={{ background: isCurrentUser ? 'rgba(59,130,246,0.04)' : 'transparent' }}>
-                    <td style={{ fontWeight: 'bold', color: idx === 0 ? 'var(--color-warning)' : 'var(--color-text-muted)' }}>
+                  <tr key={idx} style={{ background: isCurrentUser ? 'rgba(37, 99, 235, 0.025)' : 'transparent' }}>
+                    <td style={{ fontWeight: 700, color: idx === 0 ? 'var(--color-warning)' : 'var(--color-text-muted)' }}>
                       #{idx + 1}
                     </td>
-                    <td style={{ fontWeight: 600, color: isCurrentUser ? 'white' : 'var(--color-text-muted)' }}>
+                    <td style={{ fontWeight: isCurrentUser ? 600 : 400, color: isCurrentUser ? 'var(--color-text-main)' : 'var(--color-text-muted)' }}>
                       {hero.name} {isCurrentUser && '⭐'}
                     </td>
-                    <td>{hero.rank}</td>
-                    <td>{hero.verifiedCount} anomalies</td>
-                    <td style={{ fontWeight: 'bold', color: 'var(--color-healthy)' }}>{hero.points} XP</td>
+                    <td style={{ color: 'var(--color-text-muted)' }}>{hero.rank}</td>
+                    <td style={{ color: 'var(--color-text-muted)' }}>{hero.verifiedCount}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--color-healthy)' }}>{hero.points} XP</td>
                   </tr>
                 );
               })}
