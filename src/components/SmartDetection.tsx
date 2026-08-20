@@ -8,8 +8,6 @@ interface SmartDetectionProps {
   onAnalysisComplete: (result: AnalysisResult) => void;
   apiKey?: string;
   userLocation: { lat: number; lng: number };
-  prefilledCoords?: { lat: number; lng: number } | null;
-  onClearPrefilled?: () => void;
 }
 
 export const SmartDetection: React.FC<SmartDetectionProps> = ({
@@ -17,8 +15,6 @@ export const SmartDetection: React.FC<SmartDetectionProps> = ({
   onAnalysisComplete,
   apiKey,
   userLocation,
-  prefilledCoords,
-  onClearPrefilled
 }) => {
   const [description, setDescription] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -26,7 +22,6 @@ export const SmartDetection: React.FC<SmartDetectionProps> = ({
   const [recordingTime, setRecordingTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gpsMock, setGpsMock] = useState(userLocation);
-  const [locationType, setLocationType] = useState<'standard' | 'near-hospital' | 'near-school'>('near-hospital');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<number | null>(null);
@@ -35,31 +30,19 @@ export const SmartDetection: React.FC<SmartDetectionProps> = ({
     setGpsMock(userLocation);
   }, [userLocation]);
 
-  useEffect(() => {
-    if (prefilledCoords) {
-      setGpsMock(prefilledCoords);
-      if (onClearPrefilled) {
-        onClearPrefilled();
-      }
-    }
-  }, [prefilledCoords, onClearPrefilled]);
-
   const handleSelectPreset = (type: 'pothole' | 'leakage' | 'streetlight') => {
     if (type === 'pothole') {
       setDescription("Massive road crack and pothole in the middle of Oakridge Lane. It's collecting water and cars are swerving aggressively to miss it.");
       setImagePreview("https://images.unsplash.com/photo-1515162305285-0293e4767cc2?q=80&w=400");
       setGpsMock({ lat: userLocation.lat + 0.0018, lng: userLocation.lng - 0.0034 });
-      setLocationType('near-hospital');
     } else if (type === 'leakage') {
       setDescription("Water is gushing out from the pavement next to the sidewalk near Grand Plaza. Looks like a clean water pipeline has burst.");
       setImagePreview("https://images.unsplash.com/photo-1508189860359-777d945909ef?q=80&w=400");
       setGpsMock({ lat: userLocation.lat - 0.0035, lng: userLocation.lng + 0.0049 });
-      setLocationType('standard');
     } else if (type === 'streetlight') {
       setDescription("Streetlights are completely off on 4th Avenue crossroad. Very dark here, feels unsafe for kids walking home from the nearby school.");
       setImagePreview("https://images.unsplash.com/photo-1509395062183-67c5ad6faff9?q=80&w=400");
       setGpsMock({ lat: userLocation.lat + 0.0069, lng: userLocation.lng - 0.0070 });
-      setLocationType('near-school');
     }
   };
 
@@ -261,30 +244,15 @@ export const SmartDetection: React.FC<SmartDetectionProps> = ({
               border: '1px solid rgba(220, 38, 38, 0.1)'
             }}>
               <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-                <span style={{ display: 'block', width: '3px', height: '12px', background: 'var(--color-critical)', borderRadius: '2px', animation: 'pulseGlow 0.5s infinite ease-out' }} />
-                <span style={{ display: 'block', width: '3px', height: '18px', background: 'var(--color-critical)', borderRadius: '2px', animation: 'pulseGlow 0.5s infinite 0.1s ease-out' }} />
-                <span style={{ display: 'block', width: '3px', height: '14px', background: 'var(--color-critical)', borderRadius: '2px', animation: 'pulseGlow 0.5s infinite 0.2s ease-out' }} />
+                <span className="recording-bar" />
+                <span className="recording-bar" />
+                <span className="recording-bar" />
               </div>
               <span style={{ fontSize: '0.78rem', color: 'var(--color-text-main)', fontWeight: 500 }}>
                 Recording — {recordingTime}s — Speak now...
               </span>
             </div>
           )}
-        </div>
-
-        {/* Location Type */}
-        <div className="form-group">
-          <label className="form-label">Geospatial Proximity Profile</label>
-          <select 
-            className="form-select"
-            value={locationType}
-            onChange={(e) => setLocationType(e.target.value as any)}
-            style={{ width: '100%' }}
-          >
-            <option value="standard">Standard Road Grid</option>
-            <option value="near-hospital">Near Hospital</option>
-            <option value="near-school">Near School</option>
-          </select>
         </div>
 
         <button

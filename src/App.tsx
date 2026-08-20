@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MOCK_ISSUES, generateAgentLogs } from './services/geminiService';
 import type { AnalysisResult, PredictionNode, RepairPlan } from './services/geminiService';
 import { DigitalTwinMap } from './components/DigitalTwinMap';
@@ -16,15 +16,17 @@ import { IssueComments } from './components/IssueComments';
 import { ExportButton } from './components/ExportButton';
 import { QuickReportFAB } from './components/QuickReportFAB';
 import { LocationPicker } from './components/LocationPicker';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import {
+  DEFAULT_COORDS, TAB_ROUTES, TAB_SHORTCUTS,
+  ROLE_TABS, STORAGE_KEYS, POINTS, reverseGeocode
+} from './config';
 import {
   Layers, Upload, Cpu, Clipboard, BarChart2, Award,
   Sparkles, Key, Shield, ChevronLeft, ChevronRight,
   Navigation as NavigationIcon
 } from 'lucide-react';
 import './App.css';
-
-const DEFAULT_LAT = 12.97159;
-const DEFAULT_LNG = 77.59456;
 
 const createInitialIssues = (userLat: number, userLng: number): AnalysisResult[] => {
   const timestamp = new Date().toISOString();
@@ -80,15 +82,15 @@ const createInitialIssues = (userLat: number, userLng: number): AnalysisResult[]
 
 function AppContent() {
   const { addToast } = useNotifications();
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: DEFAULT_LAT, lng: DEFAULT_LNG });
-  const [issues, setIssues] = useState<AnalysisResult[]>(() => createInitialIssues(DEFAULT_LAT, DEFAULT_LNG));
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: DEFAULT_COORDS.lat, lng: DEFAULT_COORDS.lng });
+  const [issues, setIssues] = useState<AnalysisResult[]>(() => createInitialIssues(DEFAULT_COORDS.lat, DEFAULT_COORDS.lng));
   const [filteredIssues, setFilteredIssues] = useState<AnalysisResult[]>(issues);
   const [activeTab, setActiveTab] = useState<string>('digital-twin');
   const [selectedIssueId, setSelectedIssueId] = useState<string>('issue-1');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [userRole, setUserRole] = useState<string>('official');
   const [apiKey, setApiKey] = useState<string>(() => {
-    return import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('civicmind_gemini_api_key') || '';
+    return import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem(STORAGE_KEYS.API_KEY) || '';
   });
   const [showKeyDrawer, setShowKeyDrawer] = useState(false);
   const [keyInputValue, setKeyInputValue] = useState('');
@@ -97,15 +99,15 @@ function AppContent() {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [locationLabel, setLocationLabel] = useState('Detecting...');
 
-  const [userPoints, setUserPoints] = useState(() => {
-    const saved = localStorage.getItem('civicmind_user_points');
+  const [userPoints, setUserPoints] = useState<{ trust: number; verification: number; rank: number }>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.POINTS);
     return saved ? JSON.parse(saved) : { trust: 0, verification: 0, rank: 1 };
   });
 
   const [profileName, setProfileName] = useState<string>(() => {
-    return localStorage.getItem('civicmind_username') || '';
+    return localStorage.getItem(STORAGE_KEYS.USERNAME) || '';
   });
-  const [showProfileSetup, setShowProfileSetup] = useState(!localStorage.getItem('civicmind_username'));
+  const [showProfileSetup, setShowProfileSetup] = useState(!localStorage.getItem(STORAGE_KEYS.USERNAME));
   const [tempName, setTempName] = useState('');
 
   useEffect(() => {
@@ -115,7 +117,7 @@ function AppContent() {
         try {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true, timeout: 5000, maximumAge: 0
+              enableHighAccuracy: true, timeout: 5000, maximumAge: 0,
             });
           });
           const lat = position.coords.latitude;
@@ -124,11 +126,7 @@ function AppContent() {
           setIssues(createInitialIssues(lat, lng));
           // Reverse geocode for the label
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-            const data = await res.json();
-            const city = data.address?.city || data.address?.town || data.address?.village || '';
-            const country = data.address?.country || '';
-            setLocationLabel([city, country].filter(Boolean).join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+            setLocationLabel(await reverseGeocode(lat, lng));
           } catch {
             setLocationLabel(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
           }
@@ -171,7 +169,7 @@ function AppContent() {
       }
 
       // 4. Final fallback: check localStorage for last known location
-      const saved = localStorage.getItem('civicmind_last_location');
+      const saved = localStorage.getItem(STORAGE_KEYS.LAST_LOCATION);
       if (saved) {
         try {
           const loc = JSON.parse(saved);
@@ -191,7 +189,7 @@ function AppContent() {
 
   // Save location to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('civicmind_last_location', JSON.stringify(userLocation));
+    localStorage.setItem(STORAGE_KEYS.LAST_LOCATION, JSON.stringify(userLocation));
   }, [userLocation]);
 
   const handleLocationSelect = (lat: number, lng: number, label: string) => {
@@ -215,8 +213,7 @@ function AppContent() {
       }
       // Number keys 1-6 for tab switching (only when not in input)
       if (['1', '2', '3', '4', '5', '6'].includes(e.key) && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement)) {
-        const tabMap: Record<string, string> = { '1': 'digital-twin', '2': 'detection', '3': 'command-center', '4': 'authority', '5': 'analytics', '6': 'gamification' };
-        const tab = tabMap[e.key];
+        const tab = TAB_SHORTCUTS[e.key];
         if (tab) setActiveTab(tab);
       }
     };
@@ -247,9 +244,9 @@ function AppContent() {
       return issue;
     }));
 
-    setUserPoints((prev: any) => {
-      const next = { ...prev, trust: prev.trust + 50, rank: Math.floor((prev.trust + 50) / 100) + 1 };
-      localStorage.setItem('civicmind_user_points', JSON.stringify(next));
+    setUserPoints((prev: { trust: number; verification: number; rank: number }) => {
+      const next = { ...prev, trust: prev.trust + POINTS.ISSUE_RESOLVED, rank: Math.floor((prev.trust + POINTS.ISSUE_RESOLVED) / 100) + 1 };
+      localStorage.setItem(STORAGE_KEYS.POINTS, JSON.stringify(next));
       return next;
     });
 
@@ -264,55 +261,59 @@ function AppContent() {
       return issue;
     }));
 
-    setUserPoints((prev: any) => {
-      const next = { ...prev, trust: prev.trust + 15, verification: prev.verification + 1, rank: Math.floor((prev.trust + 15) / 100) + 1 };
-      localStorage.setItem('civicmind_user_points', JSON.stringify(next));
+    setUserPoints((prev: { trust: number; verification: number; rank: number }) => {
+      const next = { ...prev, trust: prev.trust + POINTS.ISSUE_VERIFIED, verification: prev.verification + 1, rank: Math.floor((prev.trust + POINTS.ISSUE_VERIFIED) / 100) + 1 };
+      localStorage.setItem(STORAGE_KEYS.POINTS, JSON.stringify(next));
       return next;
     });
 
     addToast('Issue verified! +15 Trust Points earned.', 'success');
   };
 
-  const getUnresolvedCount = () => issues.filter(i => i.status !== 'resolved').length;
+  const unresolvedCount = useMemo(() => issues.filter(i => i.status !== 'resolved').length, [issues]);
 
-  const getMaskedKey = (key: string) => {
-    if (!key) return '';
-    if (key.length <= 8) return '••••••••';
-    return key.substring(0, 4) + '••••' + key.substring(key.length - 4);
-  };
+  const maskedKey = useMemo(() => {
+    if (!apiKey) return '';
+    if (apiKey.length <= 8) return '••••••••';
+    return apiKey.substring(0, 4) + '••••' + apiKey.substring(apiKey.length - 4);
+  }, [apiKey]);
 
   const handleOpenKeyDrawer = () => {
     setKeyInputValue('');
     setShowKeyDrawer(true);
   };
 
-  const handleSaveKey = () => {
+  const handleSaveKey = useCallback(() => {
     if (keyInputValue.trim()) {
       setApiKey(keyInputValue.trim());
-      localStorage.setItem('civicmind_gemini_api_key', keyInputValue.trim());
+      localStorage.setItem(STORAGE_KEYS.API_KEY, keyInputValue.trim());
       addToast('Gemini API key saved successfully.', 'success');
     }
     setShowKeyDrawer(false);
-  };
+  }, [keyInputValue, addToast]);
 
   const renderSidebarLinks = () => {
     const links = [
-      { id: 'digital-twin', label: 'Digital Twin Map', icon: <Layers size={18} />, roles: ['citizen', 'official', 'volunteer', 'admin'] },
-      { id: 'detection', label: 'Report Issue', icon: <Upload size={18} />, roles: ['citizen', 'volunteer'] },
-      { id: 'command-center', label: 'Agent Command Center', icon: <Cpu size={18} />, roles: ['official', 'admin'] },
-      { id: 'authority', label: 'Resolution Planning', icon: <Clipboard size={18} />, roles: ['official', 'admin'] },
-      { id: 'analytics', label: 'Civic Analytics', icon: <BarChart2 size={18} />, roles: ['official', 'admin'] },
-      { id: 'gamification', label: 'Community Hero', icon: <Award size={18} />, roles: ['citizen', 'volunteer'] }
+      { id: 'digital-twin', label: 'Digital Twin Map', icon: <Layers size={18} /> },
+      { id: 'detection', label: 'Report Issue', icon: <Upload size={18} /> },
+      { id: 'command-center', label: 'Agent Command Center', icon: <Cpu size={18} /> },
+      { id: 'authority', label: 'Resolution Planning', icon: <Clipboard size={18} /> },
+      { id: 'analytics', label: 'Civic Analytics', icon: <BarChart2 size={18} /> },
+      { id: 'gamification', label: 'Community Hero', icon: <Award size={18} /> },
     ];
+    const allowedTabs = ROLE_TABS[userRole] || [];
 
     return links
-      .filter(l => l.roles.includes(userRole))
+      .filter(l => allowedTabs.includes(l.id))
       .map(l => (
         <li
           key={l.id}
           onClick={() => setActiveTab(l.id)}
           className={`sidebar-item ${activeTab === l.id ? 'active' : ''}`}
           title={sidebarCollapsed ? l.label : undefined}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveTab(l.id); }}
         >
           {l.icon}
           {!sidebarCollapsed && l.label}
@@ -393,6 +394,7 @@ function AppContent() {
         {/* Sidebar collapse toggle */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           style={{
             position: 'absolute',
             right: '-12px',
@@ -424,22 +426,8 @@ function AppContent() {
         {/* Header */}
         <header className="dashboard-header">
           <div className="dashboard-title-area">
-            <h1>
-              {activeTab === 'digital-twin' && 'Autonomous Digital Twin'}
-              {activeTab === 'detection' && 'Smart Detection Portal'}
-              {activeTab === 'command-center' && 'Multi-Agent Command Center'}
-              {activeTab === 'authority' && 'Autonomous Resolution Planner'}
-              {activeTab === 'analytics' && 'Civic Intelligence Dashboard'}
-              {activeTab === 'gamification' && 'Community Heroes'}
-            </h1>
-            <p>
-              {activeTab === 'digital-twin' && 'Living city vector mesh tracking infrastructure health ratings.'}
-              {activeTab === 'detection' && 'Upload community issues directly to the AI-powered municipal agents.'}
-              {activeTab === 'command-center' && 'Visual inspection of agent interactions and computational thoughts.'}
-              {activeTab === 'authority' && 'Review AI-generated work estimates, material sheets, and verify repairs.'}
-              {activeTab === 'analytics' && 'Aggregate city performance index, predicted failures, and spent budgets.'}
-              {activeTab === 'gamification' && 'Consensus-based neighborhood verification missions for local heroes.'}
-            </p>
+            <h1>{TAB_ROUTES[activeTab as keyof typeof TAB_ROUTES]?.title || 'CivicMind'}</h1>
+            <p>{TAB_ROUTES[activeTab as keyof typeof TAB_ROUTES]?.description || ''}</p>
           </div>
 
           <div className="dashboard-meta">
@@ -450,6 +438,7 @@ function AppContent() {
             <button
               onClick={handleOpenKeyDrawer}
               className="btn"
+              aria-label="Configure Gemini API key"
               style={{
                 fontSize: '0.78rem', padding: '8px 14px',
                 borderColor: apiKey ? 'rgba(5, 150, 105, 0.2)' : 'var(--border-subtle)',
@@ -467,6 +456,7 @@ function AppContent() {
             <button
               onClick={() => setShowLocationPicker(true)}
               className="btn"
+              aria-label="Change location"
               style={{
                 fontSize: '0.78rem', padding: '8px 14px', gap: '6px',
                 borderColor: 'rgba(8, 145, 178, 0.2)',
@@ -484,7 +474,7 @@ function AppContent() {
               padding: '8px 14px', borderRadius: '10px'
             }}>
               <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>
-                {getUnresolvedCount()} active
+                {unresolvedCount} active
               </span>
             </div>
           </div>
@@ -524,10 +514,10 @@ function AppContent() {
                 style={{ flexGrow: 1, fontSize: '0.82rem', border: 'none', background: 'transparent', boxShadow: 'none', padding: '10px 0' }}
                 autoFocus
               />
-              <button onClick={handleSaveKey} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.82rem', borderRadius: '8px', flexShrink: 0 }}>
+              <button type="button" onClick={handleSaveKey} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.82rem', borderRadius: '8px', flexShrink: 0 }}>
                 Save
               </button>
-              <button onClick={() => setShowKeyDrawer(false)} className="btn" style={{ padding: '10px 14px', fontSize: '0.82rem', borderRadius: '8px', flexShrink: 0 }}>
+              <button type="button" onClick={() => setShowKeyDrawer(false)} className="btn" style={{ padding: '10px 14px', fontSize: '0.82rem', borderRadius: '8px', flexShrink: 0 }}>
                 Cancel
               </button>
             </div>
@@ -536,12 +526,13 @@ function AppContent() {
               <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Shield size={13} style={{ color: 'var(--color-text-dark)' }} />
                 <span style={{ fontSize: '0.72rem', color: 'var(--color-text-dark)' }}>
-                  Key stored locally: {getMaskedKey(apiKey)}
+                  Key stored locally: {maskedKey}
                 </span>
                 <button
+                  type="button"
                   onClick={() => {
                     setApiKey('');
-                    localStorage.removeItem('civicmind_gemini_api_key');
+                    localStorage.removeItem(STORAGE_KEYS.API_KEY);
                     addToast('Gemini API key removed.', 'warning');
                   }}
                   style={{ fontSize: '0.72rem', color: 'var(--color-critical)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, padding: '2px 4px' }}
@@ -634,6 +625,7 @@ function AppContent() {
                   </h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowIssueDetail(false)}
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
@@ -707,7 +699,7 @@ function AppContent() {
               onClick={() => {
                 if (tempName.trim()) {
                   const cleaned = tempName.trim();
-                  localStorage.setItem('civicmind_username', cleaned);
+                  localStorage.setItem(STORAGE_KEYS.USERNAME, cleaned);
                   setProfileName(cleaned);
                   setShowProfileSetup(false);
                   addToast(`Welcome, ${cleaned}! Your hero profile is ready.`, 'success');
@@ -727,10 +719,12 @@ function AppContent() {
 
 function App() {
   return (
-    <NotificationProvider>
-      <AppContent />
-      <ToastContainer />
-    </NotificationProvider>
+    <ErrorBoundary>
+      <NotificationProvider>
+        <AppContent />
+        <ToastContainer />
+      </NotificationProvider>
+    </ErrorBoundary>
   );
 }
 

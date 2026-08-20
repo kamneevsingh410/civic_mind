@@ -57,6 +57,7 @@ export const QuickReportFAB: React.FC<QuickReportFABProps> = ({ onNavigateToRepo
                 {action.label}
               </span>
               <button
+                type="button"
                 onClick={() => {
                   setIsOpen(false);
                   action.onClick();
@@ -84,7 +85,10 @@ export const QuickReportFAB: React.FC<QuickReportFABProps> = ({ onNavigateToRepo
       )}
 
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? 'Close quick actions' : 'Quick report'}
+        aria-expanded={isOpen}
         style={{
           width: '52px',
           height: '52px',

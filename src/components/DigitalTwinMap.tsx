@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { AnalysisResult } from '../services/geminiService';
 import { MapLayerControls, getTileUrl, type MapStyle } from './MapLayerControls';
 import { CheckCircle, Layers, Shield, Compass, Navigation as NavigationIcon } from 'lucide-react';
@@ -22,8 +22,14 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
   const [mapStyle, setMapStyle] = useState<MapStyle>('positron');
   const [localAddress, setLocalAddress] = useState<string>("Locating neighborhood...");
 
-  const mapContainerRef = React.useRef<HTMLDivElement>(null);
-  const mapInstanceRef = React.useRef<any>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<{ remove: () => void; setView: (latlng: [number, number], zoom: number) => unknown; panTo: (latlng: [number, number]) => unknown } | null>(null);
+
+  // Use refs for callbacks to avoid reinitializing the map on every render
+  const onSelectIssueRef = useRef(onSelectIssue);
+  const onReportAtCoordsRef = useRef(onReportAtCoords);
+  onSelectIssueRef.current = onSelectIssue;
+  onReportAtCoordsRef.current = onReportAtCoords;
 
   useEffect(() => {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`)
@@ -109,7 +115,7 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
 
       const marker = L.marker([issue.latitude, issue.longitude], { icon: customIcon });
       marker.on('click', () => {
-        onSelectIssue(issue);
+        onSelectIssueRef.current(issue);
       });
       marker.addTo(map);
 
@@ -128,7 +134,7 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
       }
     });
 
-    map.on('dblclick', (e: any) => {
+    map.on('dblclick', (e: { latlng: { lat: number; lng: number } }) => {
       const { lat, lng } = e.latlng;
 
       fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
@@ -184,12 +190,12 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
         });
     });
 
-    map.on('popupopen', (e: any) => {
+    map.on('popupopen', (e: { popup: { getLatLng: () => { lat: number; lng: number } } }) => {
       const btn = document.getElementById('report-here-btn');
       if (btn) {
         btn.onclick = () => {
           const latlng = e.popup.getLatLng();
-          onReportAtCoords(latlng.lat, latlng.lng);
+          onReportAtCoordsRef.current(latlng.lat, latlng.lng);
         };
       }
     });
@@ -200,7 +206,7 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
         mapInstanceRef.current = null;
       }
     };
-  }, [mapLoaded, issues, selectedIssueId, userLocation, mapStyle]);
+  }, [mapLoaded, issues, selectedIssueId, userLocation, mapStyle]); // eslint-disable-line -- refs stable
 
   const activeIssues = issues.filter(i => i.status !== 'resolved');
   const resolvedIssues = issues.filter(i => i.status === 'resolved');
