@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import type { AnalysisResult } from '../services/geminiService';
 
@@ -9,6 +9,7 @@ interface IssueSearchBarProps {
 
 export const IssueSearchBar: React.FC<IssueSearchBarProps> = ({ issues, onFiltered }) => {
   const [searchText, setSearchText] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [category, setCategory] = useState('all');
   const [severity, setSeverity] = useState('all');
   const [status, setStatus] = useState('all');
@@ -47,10 +48,13 @@ export const IssueSearchBar: React.FC<IssueSearchBarProps> = ({ issues, onFilter
     onFiltered(result);
   };
 
-  const handleTextChange = (val: string) => {
+  const handleTextChange = useCallback((val: string) => {
     setSearchText(val);
-    applyFilters(val, category, severity, status);
-  };
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      applyFilters(val, category, severity, status);
+    }, 200);
+  }, [category, severity, status]);
 
   const handleCategoryChange = (val: string) => {
     setCategory(val);
@@ -108,7 +112,9 @@ export const IssueSearchBar: React.FC<IssueSearchBarProps> = ({ issues, onFilter
           />
           {searchText && (
             <button
+              type="button"
               onClick={() => handleTextChange('')}
+              aria-label="Clear search"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-dark)', padding: '2px' }}
             >
               <X size={14} />
@@ -116,8 +122,11 @@ export const IssueSearchBar: React.FC<IssueSearchBarProps> = ({ issues, onFilter
           )}
         </div>
         <button
+          type="button"
           onClick={() => setShowFilters(!showFilters)}
           className="btn"
+          aria-expanded={showFilters}
+          aria-label="Toggle filters"
           style={{
             padding: '8px 14px',
             fontSize: '0.78rem',
@@ -211,6 +220,7 @@ export const IssueSearchBar: React.FC<IssueSearchBarProps> = ({ issues, onFilter
 
           {hasFilters && (
             <button
+              type="button"
               onClick={clearAll}
               style={{
                 background: 'none',

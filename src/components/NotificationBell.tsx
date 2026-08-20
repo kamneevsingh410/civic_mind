@@ -18,22 +18,32 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ issues }) =>
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Generate activities once when issues change, preserving read state
   useEffect(() => {
-    const generated: ActivityItem[] = issues.map((issue, idx) => ({
-      id: `activity-${idx}`,
-      type: issue.status === 'resolved' ? 'resolved' : idx % 2 === 0 ? 'report' : 'verified',
-      message: issue.status === 'resolved'
-        ? `"${issue.title}" has been repaired and closed.`
-        : issue.verificationCount > 2
-        ? `"${issue.title}" reached community consensus (${issue.verificationCount}/4).`
-        : `New issue reported: "${issue.title}" — awaiting investigation.`,
-      time: `${(idx + 1) * 12}m ago`,
-      read: idx > 1
-    }));
-    setActivities(generated);
+    setActivities(prev => {
+      const generated: ActivityItem[] = issues.map((issue, idx) => {
+        const existing = prev.find(a => a.id === `activity-${idx}`);
+        return {
+          id: `activity-${idx}`,
+          type: issue.status === 'resolved' ? 'resolved' : idx % 2 === 0 ? 'report' : 'verified',
+          message: issue.status === 'resolved'
+            ? `"${issue.title}" has been repaired and closed.`
+            : issue.verificationCount > 2
+            ? `"${issue.title}" reached community consensus (${issue.verificationCount}/4).`
+            : `New issue reported: "${issue.title}" — awaiting investigation.`,
+          time: `${(idx + 1) * 12}m ago`,
+          read: existing?.read ?? idx > 1
+        };
+      });
+      return generated;
+    });
   }, [issues]);
 
   const unreadCount = activities.filter(a => !a.read).length;
+
+  const markAllRead = () => {
+    setActivities(prev => prev.map(a => ({ ...a, read: true })));
+  };
 
   const iconMap = {
     report: <Upload size={13} style={{ color: 'var(--color-primary)' }} />,
@@ -62,8 +72,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ issues }) =>
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="btn"
+        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+        aria-expanded={isOpen}
         style={{
           padding: '8px 12px',
           position: 'relative',
@@ -125,25 +138,28 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ issues }) =>
             )}
           </div>
 
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              onClick={markAllRead}
+              style={{
+                width: '100%', padding: '8px', textAlign: 'center',
+                background: 'none', border: 'none', borderBottom: '1px solid var(--border-subtle)',
+                cursor: 'pointer', fontSize: '0.72rem', color: 'var(--color-primary)',
+                fontWeight: 500, fontFamily: 'var(--font-body)'
+              }}
+            >
+              Mark all as read
+            </button>
+          )}
+
           <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
             {activities.map(activity => (
               <div
                 key={activity.id}
-                style={{
-                  padding: '12px 16px',
-                  display: 'flex',
-                  gap: '10px',
-                  alignItems: 'flex-start',
-                  background: activity.read ? 'transparent' : 'rgba(37, 99, 235, 0.02)',
-                  borderBottom: '1px solid rgba(0, 0, 0, 0.03)',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.background = 'rgba(0, 0, 0, 0.02)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.background = activity.read ? 'transparent' : 'rgba(37, 99, 235, 0.02)';
+                className={`notification-item ${activity.read ? '' : 'unread'}`}
+                onClick={() => {
+                  setActivities(prev => prev.map(a => a.id === activity.id ? { ...a, read: true } : a));
                 }}
               >
                 <div style={{

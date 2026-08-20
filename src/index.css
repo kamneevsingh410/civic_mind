@@ -584,3 +584,230 @@ h1, h2, h3, h4, h5, h6 {
 .status-dot-green { background: var(--color-healthy); }
 .status-dot-amber { background: var(--color-warning); }
 .status-dot-red { background: var(--color-critical); }
+
+/* Spin animation for loaders */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Shimmer loading skeleton animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Recording indicator animation */
+.recording-bar {
+  display: block;
+  width: 3px;
+  height: 12px;
+  background: var(--color-critical);
+  border-radius: 2px;
+  animation: pulseGlow 0.5s infinite ease-out;
+}
+
+.recording-bar:nth-child(2) { height: 18px; animation-delay: 0.1s; }
+.recording-bar:nth-child(3) { height: 14px; animation-delay: 0.2s; }
+
+/* Common card styles */
+.info-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-deep);
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+}
+
+/* Sidebar role select */
+.role-select {
+  width: 100%;
+  font-size: 0.82rem;
+}
+
+/* Interactive hover states (replace inline JS handlers) */
+.hover-bg-subtle {
+  transition: background 0.15s ease;
+}
+
+.hover-bg-subtle:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.notification-item {
+  padding: 12px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.notification-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.notification-item.unread {
+  background: rgba(37, 99, 235, 0.02);
+}
+
+.notification-item.unread:hover {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.location-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-size: 0.82rem;
+  color: var(--color-text-main);
+  transition: background 0.1s ease;
+  font-family: var(--font-body);
+}
+
+.location-option:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus visible outlines for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Responsive: Tablet (≤1024px) */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 60px !important;
+    padding: 20px 8px;
+  }
+
+  .sidebar-logo-icon {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .sidebar-menu {
+    align-items: center;
+  }
+
+  .sidebar-item span,
+  .sidebar-logo-text {
+    display: none;
+  }
+
+  .sidebar-item {
+    justify-content: center;
+    padding: 10px;
+    gap: 0;
+  }
+
+  .sidebar-profile {
+    display: none;
+  }
+
+  .main-viewport {
+    padding: 16px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dashboard-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* Responsive: Mobile (≤640px) */
+@media (max-width: 640px) {
+  .sidebar {
+    display: none !important;
+  }
+
+  .main-viewport {
+    padding: 12px;
+    margin-left: 0 !important;
+  }
+
+  .dashboard-title-area h1 {
+    font-size: 1.2rem;
+  }
+
+  .dashboard-title-area p {
+    font-size: 0.78rem;
+  }
+
+  .glass-panel {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .data-table {
+    font-size: 0.78rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 8px;
+  }
+
+  /* Stack grid columns on mobile */
+  .col-3, .col-4, .col-6, .col-8, .col-12 {
+    grid-column: span 12 !important;
+  }
+
+  .dashboard-grid {
+    gap: 12px;
+  }
+
+  /* Stack authority portal grid */
+  .glass-panel[style*="grid-template-columns: 380px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .glass-panel[style*="grid-template-columns: 460px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Issue detail panel stacking */
+  .glass-panel[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Map sidebar grid */
+  .glass-panel[style*="grid-template-columns: 1fr 340px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-meta .btn span {
+    display: none;
+  }
+}

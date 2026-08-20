@@ -315,12 +315,12 @@ export const AuthorityPortal: React.FC<AuthorityPortalProps> = ({
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <div>
                       <span style={{ fontSize: '0.62rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>Before</span>
-                      <img src={selectedIssue.imageBefore} alt="Before" style={{ width: '110px', height: '75px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-subtle)' }} />
+                      <img src={selectedIssue.imageBefore} alt="Before" loading="lazy" style={{ width: '110px', height: '75px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-subtle)' }} />
                     </div>
                     <ArrowRight size={16} style={{ color: 'var(--color-healthy)', flexShrink: 0 }} />
                     <div>
                       <span style={{ fontSize: '0.62rem', color: 'var(--color-healthy)', display: 'block', marginBottom: '4px' }}>Resolved</span>
-                      <img src={selectedIssue.imageAfter} alt="After" style={{ width: '110px', height: '75px', objectFit: 'cover', borderRadius: '8px', border: '1.5px solid var(--color-healthy)' }} />
+                      <img src={selectedIssue.imageAfter} alt="After" loading="lazy" style={{ width: '110px', height: '75px', objectFit: 'cover', borderRadius: '8px', border: '1.5px solid var(--color-healthy)' }} />
                     </div>
                   </div>
 

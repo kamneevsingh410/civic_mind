@@ -176,7 +176,9 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close location picker"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               color: 'var(--color-text-dark)', padding: '4px', borderRadius: '6px'
@@ -188,6 +190,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
 
         {/* Auto-detect button */}
         <button
+          type="button"
           onClick={handleDetectLocation}
           disabled={isDetecting}
           className="btn"
@@ -260,16 +263,9 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             {searchResults.map((result, idx) => (
               <button
                 key={idx}
+                type="button"
                 onClick={() => handleSelectCity(result)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '10px 14px', background: 'transparent', border: 'none',
-                  cursor: 'pointer', textAlign: 'left', width: '100%',
-                  fontSize: '0.82rem', color: 'var(--color-text-main)',
-                  transition: 'background 0.1s ease', fontFamily: 'var(--font-body)'
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.02)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                className="location-option"
               >
                 <MapPin size={14} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                 <span style={{ flex: 1 }}>{result.name}</span>
@@ -294,15 +290,16 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
               display: 'flex', flexWrap: 'wrap', gap: '6px'
             }}>
               {POPULAR_CITIES.map((city) => (
-                <button
-                  key={city.name}
-                  onClick={() => handleSelectCity(city)}
-                  className="btn"
-                  style={{
-                    fontSize: '0.72rem', padding: '6px 12px', gap: '5px',
-                    background: 'var(--bg-deep)',
-                    borderColor: 'var(--border-subtle)'
-                  }}
+              <button
+                key={city.name}
+                type="button"
+                onClick={() => handleSelectCity(city)}
+                className="btn hover-bg-subtle"
+                style={{
+                  fontSize: '0.72rem', padding: '6px 12px', gap: '5px',
+                  background: 'var(--bg-deep)',
+                  borderColor: 'var(--border-subtle)'
+                }}
                 >
                   <MapPin size={10} style={{ color: 'var(--color-primary)' }} />
                   {city.name.split(',')[0]}

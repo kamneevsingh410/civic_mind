@@ -157,9 +157,11 @@ export const IssueComments: React.FC<IssueCommentsProps> = ({ issueId, profileNa
           }}
         />
         <button
+          type="button"
           onClick={handleSend}
           disabled={!newComment.trim()}
           className="btn btn-primary"
+          aria-label="Send comment"
           style={{
             padding: '8px 12px',
             borderRadius: '8px',

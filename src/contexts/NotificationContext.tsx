@@ -31,7 +31,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const addToast = useCallback((message: string, type: ToastType = 'info', duration = 4000) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const toast: Toast = { id, message, type, duration };
     setToasts(prev => [...prev, toast]);
     if (duration > 0) {

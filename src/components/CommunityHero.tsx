@@ -130,6 +130,7 @@ export const CommunityHero: React.FC<CommunityHeroProps> = ({
                     <img 
                       src={issue.imageBefore} 
                       alt={issue.title} 
+                      loading="lazy"
                       style={{ 
                         width: '56px', 
                         height: '56px', 

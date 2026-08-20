@@ -34,6 +34,7 @@ export const MapLayerControls: React.FC<MapLayerControlsProps> = ({ activeStyle,
     }}>
       {STYLES.map(s => (
         <button
+          type="button"
           key={s.key}
           onClick={() => onStyleChange(s.key)}
           style={{

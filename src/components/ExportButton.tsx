@@ -50,8 +50,10 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ issues, label = 'Exp
 
   return (
     <button
+      type="button"
       onClick={handleExport}
       className="btn"
+      aria-label="Export issues to CSV"
       style={{ fontSize: '0.78rem', padding: '8px 14px' }}
     >
       <Download size={14} />
