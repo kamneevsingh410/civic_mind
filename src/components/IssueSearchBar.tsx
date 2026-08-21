@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import type { AnalysisResult } from '../services/geminiService';
 
@@ -7,7 +7,7 @@ interface IssueSearchBarProps {
   onFiltered: (filtered: AnalysisResult[]) => void;
 }
 
-export const IssueSearchBar: React.FC<IssueSearchBarProps> = ({ issues, onFiltered }) => {
+export const IssueSearchBar = ({ issues, onFiltered }: IssueSearchBarProps) => {
   const [searchText, setSearchText] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [category, setCategory] = useState('all');

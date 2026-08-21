@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { AnalysisResult } from '../services/geminiService';
 import { Award, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
@@ -16,12 +16,12 @@ interface LeaderboardUser {
   verifiedCount: number;
 }
 
-export const CommunityHero: React.FC<CommunityHeroProps> = ({
+export const CommunityHero = ({
   issues,
   onVerifyIssue,
   userPoints,
   profileName
-}) => {
+}: CommunityHeroProps) => {
   const [votedIssues, setVotedIssues] = useState<Record<string, boolean>>({});
 
   const dynamicLeaderboard: LeaderboardUser[] = [

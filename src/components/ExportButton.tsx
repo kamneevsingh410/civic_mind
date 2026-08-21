@@ -1,4 +1,3 @@
-import React from 'react';
 import { Download } from 'lucide-react';
 import type { AnalysisResult } from '../services/geminiService';
 
@@ -7,7 +6,7 @@ interface ExportButtonProps {
   label?: string;
 }
 
-export const ExportButton: React.FC<ExportButtonProps> = ({ issues, label = 'Export CSV' }) => {
+export const ExportButton = ({ issues, label = 'Export CSV' }: ExportButtonProps) => {
 
   const handleExport = () => {
     const headers = [

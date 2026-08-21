@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { MOCK_ISSUES, generateAgentLogs } from './services/geminiService';
 import type { AnalysisResult, PredictionNode, RepairPlan } from './services/geminiService';
 import { DigitalTwinMap } from './components/DigitalTwinMap';
@@ -19,7 +19,7 @@ import { LocationPicker } from './components/LocationPicker';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import {
   DEFAULT_COORDS, TAB_ROUTES, TAB_SHORTCUTS,
-  ROLE_TABS, STORAGE_KEYS, POINTS, reverseGeocode
+  ROLE_TABS, STORAGE_KEYS, POINTS, reverseGeocode, validateProfileName
 } from './config';
 import {
   Layers, Upload, Cpu, Clipboard, BarChart2, Award,
@@ -98,6 +98,7 @@ function AppContent() {
   const [showIssueDetail, setShowIssueDetail] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [locationLabel, setLocationLabel] = useState('Detecting...');
+  const [isDetectingLocation, setIsDetectingLocation] = useState(true);
 
   const [userPoints, setUserPoints] = useState<{ trust: number; verification: number; rank: number }>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.POINTS);
@@ -109,6 +110,9 @@ function AppContent() {
   });
   const [showProfileSetup, setShowProfileSetup] = useState(!localStorage.getItem(STORAGE_KEYS.USERNAME));
   const [tempName, setTempName] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const showProfileSetupRef = useRef(showProfileSetup);
+  showProfileSetupRef.current = showProfileSetup;
 
   useEffect(() => {
     const detectLocation = async () => {
@@ -130,6 +134,7 @@ function AppContent() {
           } catch {
             setLocationLabel(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
           }
+          setIsDetectingLocation(false);
           return;
         } catch {
           // Browser geolocation failed, try IP fallback
@@ -145,6 +150,7 @@ function AppContent() {
             setUserLocation({ lat: data.latitude, lng: data.longitude });
             setIssues(createInitialIssues(data.latitude, data.longitude));
             setLocationLabel(`${data.city || ''}, ${data.country_name || ''}`.replace(/^, /, '').trim() || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`);
+            setIsDetectingLocation(false);
             return;
           }
         }
@@ -161,6 +167,7 @@ function AppContent() {
             setUserLocation({ lat: data.latitude, lng: data.longitude });
             setIssues(createInitialIssues(data.latitude, data.longitude));
             setLocationLabel(`${data.city || ''}, ${data.country || ''}`.replace(/^, /, '').trim() || `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`);
+            setIsDetectingLocation(false);
             return;
           }
         }
@@ -174,10 +181,11 @@ function AppContent() {
         try {
           const loc = JSON.parse(saved);
           setUserLocation(loc);
-          setIssues(createInitialIssues(loc.lat, loc.lng));
-          setLocationLabel(`${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`);
+          setIssues(createInitialIssues(loc.lat, loc.lng));          setLocationLabel(`${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`);
         } catch { /* ignore */ }
       }
+
+      setIsDetectingLocation(false);
 
       // 5. All auto-detection failed — show manual picker
       setShowLocationPicker(true);
@@ -210,6 +218,9 @@ function AppContent() {
       if (e.key === 'Escape') {
         setShowKeyDrawer(false);
         setShowIssueDetail(false);
+        if (showProfileSetupRef.current && localStorage.getItem(STORAGE_KEYS.USERNAME)) {
+          setShowProfileSetup(false);
+        }
       }
       // Number keys 1-6 for tab switching (only when not in input)
       if (['1', '2', '3', '4', '5', '6'].includes(e.key) && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement)) {
@@ -292,6 +303,8 @@ function AppContent() {
     setShowKeyDrawer(false);
   }, [keyInputValue, addToast]);
 
+  const shortcutKeys = ['1', '2', '3', '4', '5', '6'];
+
   const renderSidebarLinks = () => {
     const links = [
       { id: 'digital-twin', label: 'Digital Twin Map', icon: <Layers size={18} /> },
@@ -305,24 +318,49 @@ function AppContent() {
 
     return links
       .filter(l => allowedTabs.includes(l.id))
-      .map(l => (
+      .map((l, idx) => (
         <li
           key={l.id}
           onClick={() => setActiveTab(l.id)}
           className={`sidebar-item ${activeTab === l.id ? 'active' : ''}`}
+          aria-current={activeTab === l.id ? 'page' : undefined}
           title={sidebarCollapsed ? l.label : undefined}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveTab(l.id); }}
         >
           {l.icon}
-          {!sidebarCollapsed && l.label}
+          {!sidebarCollapsed && (
+            <>
+              <span style={{ flex: 1 }}>{l.label}</span>
+              <kbd style={{
+                fontSize: '0.6rem', padding: '1px 5px',
+                borderRadius: '4px', background: 'rgba(0,0,0,0.04)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                color: 'var(--color-text-dark)', fontFamily: 'monospace',
+                lineHeight: '1.6'
+              }}>
+                {shortcutKeys[idx]}
+              </kbd>
+            </>
+          )}
         </li>
       ));
   };
 
   return (
     <div className="app-container">
+      {/* Skip to main content (accessibility) */}
+      <a href="#main-content" style={{
+        position: 'absolute', top: '-100px', left: '0',
+        background: 'var(--color-primary)', color: 'white',
+        padding: '8px 16px', zIndex: 10001,
+        fontSize: '0.85rem', fontWeight: 600,
+        borderRadius: '0 0 8px 0', textDecoration: 'none'
+      }} onFocus={(e) => { e.currentTarget.style.top = '0'; }} onBlur={(e) => { e.currentTarget.style.top = '-100px'; }}>
+        Skip to main content
+      </a>
+
       {/* Navigation Sidebar */}
       <aside className="sidebar" style={{
         width: sidebarCollapsed ? '60px' : '270px',
@@ -352,10 +390,10 @@ function AppContent() {
               onChange={(e) => {
                 const role = e.target.value;
                 setUserRole(role);
-                if (role === 'citizen') setActiveTab('digital-twin');
-                if (role === 'official') setActiveTab('digital-twin');
-                if (role === 'volunteer') setActiveTab('gamification');
-                if (role === 'admin') setActiveTab('command-center');
+                const allowed = ROLE_TABS[role] || [];
+                if (allowed.length > 0 && !allowed.includes(activeTab)) {
+                  setActiveTab(allowed[0]);
+                }
               }}
               style={{ width: '100%', fontSize: '0.82rem' }}
             >
@@ -418,7 +456,7 @@ function AppContent() {
       </aside>
 
       {/* Main Viewport */}
-      <main className="main-viewport" style={{
+      <main id="main-content" className="main-viewport" style={{
         marginLeft: sidebarCollapsed ? '0' : undefined,
         transition: 'margin 0.25s ease'
       }}>
@@ -464,8 +502,8 @@ function AppContent() {
                 background: 'rgba(8, 145, 178, 0.04)'
               }}
             >
-              <NavigationIcon size={14} />
-              {locationLabel}
+              <NavigationIcon size={14} style={isDetectingLocation ? { animation: 'spin 1s linear infinite' } : undefined} />
+              {isDetectingLocation ? 'Detecting...' : locationLabel}
             </button>
 
             <div style={{
@@ -531,9 +569,11 @@ function AppContent() {
                 <button
                   type="button"
                   onClick={() => {
-                    setApiKey('');
-                    localStorage.removeItem(STORAGE_KEYS.API_KEY);
-                    addToast('Gemini API key removed.', 'warning');
+                    if (window.confirm('Remove the Gemini API key? Real AI analysis will be disabled.')) {
+                      setApiKey('');
+                      localStorage.removeItem(STORAGE_KEYS.API_KEY);
+                      addToast('Gemini API key removed.', 'warning');
+                    }
                   }}
                   style={{ fontSize: '0.72rem', color: 'var(--color-critical)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, padding: '2px 4px' }}
                 >
@@ -690,23 +730,35 @@ function AppContent() {
               <label className="form-label">Profile Name</label>
               <input
                 type="text" className="form-input" placeholder="Enter your name..."
-                value={tempName} onChange={(e) => setTempName(e.target.value)}
+                value={tempName} onChange={(e) => {
+                  setTempName(e.target.value);
+                  const err = validateProfileName(e.target.value);
+                  setProfileError(err || '');
+                }}
                 maxLength={20} required
               />
+              {profileError && (
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-critical)' }}>{profileError}</span>
+              )}
             </div>
 
             <button
+              type="button"
               onClick={() => {
-                if (tempName.trim()) {
-                  const cleaned = tempName.trim();
-                  localStorage.setItem(STORAGE_KEYS.USERNAME, cleaned);
-                  setProfileName(cleaned);
-                  setShowProfileSetup(false);
-                  addToast(`Welcome, ${cleaned}! Your hero profile is ready.`, 'success');
+                const err = validateProfileName(tempName);
+                if (err) {
+                  setProfileError(err);
+                  return;
                 }
+                const cleaned = tempName.trim();
+                localStorage.setItem(STORAGE_KEYS.USERNAME, cleaned);
+                setProfileName(cleaned);
+                setShowProfileSetup(false);
+                addToast(`Welcome, ${cleaned}! Your hero profile is ready.`, 'success');
               }}
               className="btn btn-primary"
-              style={{ padding: '12px', justifyContent: 'center', borderRadius: '10px' }}
+              disabled={!tempName.trim()}
+              style={{ padding: '12px', justifyContent: 'center', borderRadius: '10px', opacity: tempName.trim() ? 1 : 0.5 }}
             >
               Sync Persona & Enter
             </button>

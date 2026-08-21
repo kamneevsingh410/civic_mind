@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, X, Camera, MapPin, Mic } from 'lucide-react';
 
 interface QuickReportFABProps {
   onNavigateToReport: () => void;
 }
 
-export const QuickReportFAB: React.FC<QuickReportFABProps> = ({ onNavigateToReport }) => {
+export const QuickReportFAB = ({ onNavigateToReport }: QuickReportFABProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const actions = [

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { Upload, Mic, Square } from 'lucide-react';
 import { analyzeIssueWithGemini } from '../services/geminiService';
 import type { AnalysisResult } from '../services/geminiService';
@@ -10,18 +10,19 @@ interface SmartDetectionProps {
   userLocation: { lat: number; lng: number };
 }
 
-export const SmartDetection: React.FC<SmartDetectionProps> = ({
+export const SmartDetection = ({
   onAnalysisStarted,
   onAnalysisComplete,
   apiKey,
   userLocation,
-}) => {
+}: SmartDetectionProps) => {
   const [description, setDescription] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gpsMock, setGpsMock] = useState(userLocation);
+  const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<number | null>(null);
@@ -46,14 +47,35 @@ export const SmartDetection: React.FC<SmartDetectionProps> = ({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (file) handleFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      handleFile(file);
     }
   };
 
@@ -73,7 +95,7 @@ export const SmartDetection: React.FC<SmartDetectionProps> = ({
     setDescription("Transcribed: Heavy pothole reported on the main road grid. It has structural asphalt cracks, water pooling inside, and is presenting a high risk for vehicles.");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
     onAnalysisStarted();
@@ -148,16 +170,19 @@ export const SmartDetection: React.FC<SmartDetectionProps> = ({
         {/* Upload Area */}
         <div 
           onClick={() => fileInputRef.current?.click()}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
           style={{
             height: '160px',
-            border: '2px dashed rgba(0, 0, 0, 0.1)',
+            border: `2px dashed ${isDragging ? 'var(--color-primary)' : 'rgba(0, 0, 0, 0.1)'}`,
             borderRadius: '12px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             cursor: 'pointer',
-            background: imagePreview ? `url(${imagePreview}) center/cover no-repeat` : 'var(--bg-deep)',
+            background: isDragging ? 'rgba(37, 99, 235, 0.04)' : imagePreview ? `url(${imagePreview}) center/cover no-repeat` : 'var(--bg-deep)',
             transition: 'var(--transition-smooth)',
             position: 'relative',
             overflow: 'hidden'

@@ -83,3 +83,13 @@ export function validateProfileName(name: string): string | null {
   if (trimmed.length > 20) return 'Name must be 20 characters or less';
   return null;
 }
+
+/** Escape HTML to prevent XSS when interpolating user content into HTML strings */
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

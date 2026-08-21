@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { AnalysisResult } from '../services/geminiService';
 import { Shield, Hammer, Clipboard, CheckCircle2, TrendingUp, Eye, ArrowRight, CornerDownRight, RefreshCw } from 'lucide-react';
 
@@ -9,17 +9,17 @@ interface AuthorityPortalProps {
   onIssueResolved: (issueId: string, imageAfter: string) => void;
 }
 
-export const AuthorityPortal: React.FC<AuthorityPortalProps> = ({
+export const AuthorityPortal = ({
   issues,
   onSelectIssue,
   selectedIssue,
   onIssueResolved
-}) => {
+}: AuthorityPortalProps) => {
   const [verifying, setVerifying] = useState(false);
   const [verifyProgress, setVerifyProgress] = useState<string[]>([]);
   const [weatherData, setWeatherData] = useState<{ temp: number; desc: string; isRaining: boolean } | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!selectedIssue) return;
     setWeatherData(null);
     

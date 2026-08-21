@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Bell, CheckCircle2, AlertTriangle, Upload, Shield } from 'lucide-react';
 
 interface ActivityItem {
@@ -13,7 +13,7 @@ interface NotificationBellProps {
   issues: Array<{ title: string; status: string; verificationCount: number }>;
 }
 
-export const NotificationBell: React.FC<NotificationBellProps> = ({ issues }) => {
+export const NotificationBell = ({ issues }: NotificationBellProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);

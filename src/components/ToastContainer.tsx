@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from 'lucide-react';
 
@@ -16,19 +15,23 @@ const colorMap = {
   warning: { bg: 'rgba(217, 119, 6, 0.08)', border: 'rgba(217, 119, 6, 0.2)', text: '#d97706' }
 };
 
-export const ToastContainer: React.FC = () => {
+export const ToastContainer = () => {
   const { toasts, removeToast } = useNotifications();
 
   if (toasts.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '24px',
-      right: '24px',
-      zIndex: 10000,
-      display: 'flex',
-      flexDirection: 'column',
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Notifications"
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 10000,
+        display: 'flex',
+        flexDirection: 'column',
       gap: '8px',
       maxWidth: '380px'
     }}>

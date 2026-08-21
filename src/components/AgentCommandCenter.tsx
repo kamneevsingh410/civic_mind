@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AgentLog } from '../services/geminiService';
 import { Terminal, Cpu, RefreshCw } from 'lucide-react';
 
@@ -26,10 +26,10 @@ const AGENT_NODES: AgentNode[] = [
   { name: "Authority Agent", role: "Escalation & routing", avatar: "🏢", x: 200, y: 210 }
 ];
 
-export const AgentCommandCenter: React.FC<AgentCommandCenterProps> = ({
+export const AgentCommandCenter = ({
   logs,
   isAnalyzing
-}) => {
+}: AgentCommandCenterProps) => {
   const [activeLogIndex, setActiveLogIndex] = useState<number>(-1);
   const [currentNode, setCurrentNode] = useState<string | null>(null);
 
@@ -118,7 +118,7 @@ export const AgentCommandCenter: React.FC<AgentCommandCenterProps> = ({
         {/* Floating Nodes */}
         {AGENT_NODES.map(node => {
           const isActive = currentNode === node.name;
-          const isTriggered = visibleLogs.some(l => l.agentName === node.name);
+          const isTriggered = visibleLogs.some((l: AgentLog) => l.agentName === node.name);
           
           return (
             <div
@@ -153,7 +153,7 @@ export const AgentCommandCenter: React.FC<AgentCommandCenterProps> = ({
                   fontSize: '1.15rem',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
-                } as React.CSSProperties}
+                }}
               >
                 {node.avatar}
               </div>
@@ -192,7 +192,7 @@ export const AgentCommandCenter: React.FC<AgentCommandCenterProps> = ({
 
         <div className="terminal-console" style={{ flexGrow: 1 }}>
           {visibleLogs.length > 0 ? (
-            visibleLogs.map((log, index) => (
+            visibleLogs.map((log: AgentLog, index: number) => (
               <div 
                 key={index} 
                 className="animate-slide-up"

@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { Map, Satellite, Layers } from 'lucide-react';
 
 export type MapStyle = 'standard' | 'positron' | 'dark-matter';
@@ -8,7 +8,7 @@ interface MapLayerControlsProps {
   onStyleChange: (style: MapStyle) => void;
 }
 
-const STYLES: { key: MapStyle; label: string; icon: React.ReactNode }[] = [
+const STYLES: { key: MapStyle; label: string; icon: ReactNode }[] = [
   { key: 'standard', label: 'Standard', icon: <Map size={13} /> },
   { key: 'positron', label: 'Light', icon: <Layers size={13} /> },
   { key: 'dark-matter', label: 'Dark', icon: <Satellite size={13} /> }
@@ -22,7 +22,7 @@ const TILE_URLS: Record<MapStyle, string> = {
 
 export const getTileUrl = (style: MapStyle) => TILE_URLS[style];
 
-export const MapLayerControls: React.FC<MapLayerControlsProps> = ({ activeStyle, onStyleChange }) => {
+export const MapLayerControls = ({ activeStyle, onStyleChange }: MapLayerControlsProps) => {
   return (
     <div style={{
       display: 'flex',
