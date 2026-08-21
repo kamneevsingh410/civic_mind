@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, type KeyboardEvent } from 'react';
 import { MessageSquare, Send, User } from 'lucide-react';
 
 interface Comment {
@@ -31,7 +31,7 @@ const AUTO_COMMENTS: Record<string, Comment[]> = {
   ]
 };
 
-export const IssueComments: React.FC<IssueCommentsProps> = ({ issueId, profileName }) => {
+export const IssueComments = ({ issueId, profileName }: IssueCommentsProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
 
@@ -54,7 +54,7 @@ export const IssueComments: React.FC<IssueCommentsProps> = ({ issueId, profileNa
     setNewComment('');
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();

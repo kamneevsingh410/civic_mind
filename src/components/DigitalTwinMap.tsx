@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { AnalysisResult } from '../services/geminiService';
 import { MapLayerControls, getTileUrl, type MapStyle } from './MapLayerControls';
+import { escapeHtml } from '../config';
 import { CheckCircle, Layers, Shield, Compass, Navigation as NavigationIcon } from 'lucide-react';
 
 interface DigitalTwinMapProps {
@@ -11,13 +12,13 @@ interface DigitalTwinMapProps {
   onReportAtCoords: (lat: number, lng: number) => void;
 }
 
-export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
+export const DigitalTwinMap = ({
   issues,
   onSelectIssue,
   selectedIssueId,
   userLocation,
   onReportAtCoords
-}) => {
+}: DigitalTwinMapProps) => {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapStyle, setMapStyle] = useState<MapStyle>('positron');
   const [localAddress, setLocalAddress] = useState<string>("Locating neighborhood...");
@@ -46,7 +47,7 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
       });
   }, [userLocation]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!document.getElementById('leaflet-css')) {
       const link = document.createElement('link');
       link.id = 'leaflet-css';
@@ -69,7 +70,7 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
     }
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!mapLoaded || !mapContainerRef.current) return;
     const L = (window as any).L;
     if (!L) return;
@@ -121,9 +122,9 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
 
       marker.bindPopup(`
         <div style="color: var(--color-text-main, #1e293b); font-size: 0.75rem; line-height: 1.4;">
-          <strong style="display:block;margin-bottom:2px; color: #1e293b">${issue.title}</strong>
+          <strong style="display:block;margin-bottom:2px; color: #1e293b">${escapeHtml(issue.title)}</strong>
           <span>Priority: ${issue.priorityScore}/100</span><br/>
-          <span>Status: ${issue.status.toUpperCase()}</span>
+          <span>Status: ${escapeHtml(issue.status.toUpperCase())}</span>
         </div>
       `, {
         closeButton: false,
@@ -148,8 +149,8 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
             .setContent(`
               <div style="font-size:0.72rem; min-width:150px; line-height:1.4;">
                 <strong style="color:#2563eb; display:block; margin-bottom:4px;">📍 Selected GPS Node</strong>
-                <span>Street: ${street}</span><br/>
-                <span>City: ${city}</span><br/>
+                <span>Street: ${escapeHtml(street)}</span><br/>
+                <span>City: ${escapeHtml(city)}</span><br/>
                 <span style="color:#94a3b8; font-size:0.65rem; display:block; margin-bottom:6px;">Coords: ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>
                 <button id="report-here-btn" style="
                   width: 100%;

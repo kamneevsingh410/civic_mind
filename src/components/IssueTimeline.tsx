@@ -1,4 +1,3 @@
-import React from 'react';
 import type { AnalysisResult } from '../services/geminiService';
 import { Eye, Search, Hammer, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 
@@ -15,7 +14,7 @@ const STAGES = [
 
 const STATUS_ORDER = ['detected', 'investigated', 'planning', 'resolved'];
 
-export const IssueTimeline: React.FC<IssueTimelineProps> = ({ issue }) => {
+export const IssueTimeline = ({ issue }: IssueTimelineProps) => {
   const currentIdx = STATUS_ORDER.indexOf(issue.status);
 
   const getStageTime = (stageIdx: number) => {
@@ -41,7 +40,7 @@ export const IssueTimeline: React.FC<IssueTimelineProps> = ({ issue }) => {
           const isCurrent = idx === currentIdx;
 
           return (
-            <React.Fragment key={stage.key}>
+            <>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -100,7 +99,7 @@ export const IssueTimeline: React.FC<IssueTimelineProps> = ({ issue }) => {
                   }} />
                 </div>
               )}
-            </React.Fragment>
+            </>
           );
         })}
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MapPin, Search, Navigation, X, Loader2 } from 'lucide-react';
 
 interface LocationPickerProps {
@@ -31,12 +31,12 @@ const POPULAR_CITIES = [
   { name: 'Jakarta, Indonesia', lat: -6.2088, lng: 106.8456 },
 ];
 
-export const LocationPicker: React.FC<LocationPickerProps> = ({
+export const LocationPicker = ({
   isOpen,
   onClose,
   onLocationSelect,
   currentLocation
-}) => {
+}: LocationPickerProps) => {
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ name: string; lat: number; lng: number }>>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -57,6 +57,15 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     };
   }, []);
 
+  // Clear search when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchText('');
+      setSearchResults([]);
+      setError('');
+    }
+  }, [isOpen]);
+
   const handleSearch = (value: string) => {
     setSearchText(value);
     setError('');
@@ -76,7 +85,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         );
         if (res.ok) {
           const data = await res.json();
-          const results = data.map((item: any) => {
+          const results = data.map((item: { address?: { city?: string; town?: string; state?: string; country?: string }; lat: string; lon: string; display_name: string }) => {
             const parts = [item.address?.city, item.address?.town, item.address?.state, item.address?.country]
               .filter(Boolean);
             return {
@@ -260,9 +269,9 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             border: '1px solid var(--border-subtle)', borderRadius: '10px',
             overflow: 'hidden', maxHeight: '180px', overflowY: 'auto'
           }}>
-            {searchResults.map((result, idx) => (
+            {searchResults.map((result) => (
               <button
-                key={idx}
+                key={`${result.lat}-${result.lng}`}
                 type="button"
                 onClick={() => handleSelectCity(result)}
                 className="location-option"

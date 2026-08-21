@@ -335,7 +335,7 @@ Return a valid JSON object ONLY. Do not write markdown blocks or wrappers. The J
         );
 
         return {
-          id: Math.random().toString(36).substr(2, 9),
+          id: Math.random().toString(36).substring(2, 11),
           title: parsed.title,
           category: parsed.category,
           severity: parsed.severity,
@@ -391,7 +391,7 @@ Return a valid JSON object ONLY. Do not write markdown blocks or wrappers. The J
   );
 
   return {
-    id: Math.random().toString(36).substr(2, 9),
+    id: Math.random().toString(36).substring(2, 11),
     title: preset.title || "Civic Fracture",
     category: preset.category || "Utility",
     severity: preset.severity || 70,

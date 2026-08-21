@@ -1,25 +1,25 @@
-import React from 'react';
+import type { CSSProperties } from 'react';
 
 interface SkeletonProps {
   width?: string;
   height?: string;
   borderRadius?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }
 
-const skeletonBase: React.CSSProperties = {
+const skeletonBase: CSSProperties = {
   background: 'linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%)',
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s infinite ease-in-out',
   borderRadius: '6px',
 };
 
-export const Skeleton: React.FC<SkeletonProps> = ({
+export const Skeleton = ({
   width = '100%',
   height = '16px',
   borderRadius = '6px',
   style,
-}) => (
+}: SkeletonProps) => (
   <div
     style={{
       ...skeletonBase,
@@ -32,7 +32,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 );
 
 /** Card-style loading skeleton for issue cards */
-export const IssueCardSkeleton: React.FC = () => (
+export const IssueCardSkeleton = () => (
   <div
     className="glass-panel"
     style={{
@@ -53,7 +53,7 @@ export const IssueCardSkeleton: React.FC = () => (
 );
 
 /** Dashboard scorecard skeleton */
-export const ScorecardSkeleton: React.FC = () => (
+export const ScorecardSkeleton = () => (
   <div
     className="glass-panel"
     style={{
@@ -73,7 +73,7 @@ export const ScorecardSkeleton: React.FC = () => (
 );
 
 /** Map sidebar skeleton */
-export const MapSidebarSkeleton: React.FC = () => (
+export const MapSidebarSkeleton = () => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px' }}>
     <Skeleton width="80%" height="16px" />
     <Skeleton width="100%" height="12px" />

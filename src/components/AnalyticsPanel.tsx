@@ -1,4 +1,3 @@
-import React from 'react';
 import type { AnalysisResult } from '../services/geminiService';
 import { TrendingUp, BarChart2, DollarSign, Zap, UserCheck } from 'lucide-react';
 
@@ -6,7 +5,7 @@ interface AnalyticsPanelProps {
   issues: AnalysisResult[];
 }
 
-export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ issues }) => {
+export const AnalyticsPanel = ({ issues }: AnalyticsPanelProps) => {
   const totalIssues = issues.length;
   const resolvedIssues = issues.filter(i => i.status === 'resolved').length;
   const resolutionRate = totalIssues > 0 ? Math.round((resolvedIssues / totalIssues) * 100) : 100;
